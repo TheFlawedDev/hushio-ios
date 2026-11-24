@@ -390,3 +390,18 @@ Local LRC matched same stem ignoring case, max1MiB; embedded supported through L
 - Approve iOS file reference/ID policy, Keychain failure policy and OAuth redirects; verify target codecs and advanced DSP before enabling settings.
 - Reproduce D04/D05/D08/D09/D10/D12/D17 baseline discrepancies; retain defects separately from port regressions. No source claim substitutes for runtime evidence.
 - Complete frontend/Rust/Kotlin checks and physical-device tests. The only extraction test attempt timed out (atlas); no iOS row is implemented or verified by these documents.
+
+## Resolution log — decisions that now bind this contract
+
+This contract was extracted from the baseline **before** any iOS implementation. Where the
+port has since resolved one of its open gates, the resolution lives in `DECISIONS.md` and is
+listed here so nothing in this document is silently reinterpreted.
+
+| Gate in this document | Resolution | Effect |
+|---|---|---|
+| §P3 "Required iOS proof / interface decision" (contracts C-1/C-2: agree how active playback occurrence and generation are represented before claiming stale-event safety) | **ADR-007 Decision 1 + 2** (`DECISIONS.md`) | No generation field. One additive optional field is authorised: `player-ended` may carry `{id}`; a missing `id` must be treated as unattributable. Staleness is filtered natively (iOS drops emissions from a replaced `AVPlayerItem`) and in the shared engine (`applySnapshot` / `player-ended` / `player-error` identity guards). |
+| §P6 "Required agreement for iOS" (native/shared background ownership) | **ADR-007 Decision 3** | Native owns transport for the single installed item only (start/pause/seek/volume/speed/completion/interruption/route/sleep-deadline). Native never advances, re-orders, repeats, shuffles or rewrites the queue. Consequence: with the WebView suspended a finished track stays finished; iOS does not claim background-advance parity. |
+| §P7 sleep timer | **ADR-007 Decision 3 + `ADVANCED_AUDIO.md`** | A native pause at the deadline is permitted because it cannot desynchronise the queue. EQ / crossfade / skip-silence / leveling remain unimplemented and keep rejecting with a real code. |
+| §S3/§S1 OAuth + Keychain | `HUMAN_STEPS.md` H1/H2 | Flow and URL schemes are wired; client IDs and a signing identity are owner-supplied inputs, not code gaps. |
+
+Anything not listed above is still an open question and must be treated as such.
