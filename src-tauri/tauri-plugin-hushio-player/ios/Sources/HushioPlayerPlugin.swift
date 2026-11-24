@@ -356,6 +356,178 @@ final class HushioPlayerPlugin: Plugin {
   @objc public func cast_seek(_ invoke: Invoke) { invoke.reject("not_supported") }
   @objc public func cast_status(_ invoke: Invoke) { invoke.reject("not_supported") }
   @objc public func cast_stop(_ invoke: Invoke) { invoke.reject("not_supported") }
+
+// MARK: - camelCase aliases
+// Tauri's mobile IPC has been observed delivering camelCase command names
+// (playerSetSpeed) to this plugin even though the JS bridge sends snake_case
+// (player_set_speed). Accept both spellings so a naming difference between the two
+// sides can never break a command: each alias simply forwards to the real selector,
+// and records that it was used in the diagnostics file.
+
+  @objc public func castLoad(_ invoke: Invoke) {
+    HushioDiag.append("alias", "castLoad -> cast_load")
+    cast_load(invoke)
+  }
+
+  @objc public func castOpen(_ invoke: Invoke) {
+    HushioDiag.append("alias", "castOpen -> cast_open")
+    cast_open(invoke)
+  }
+
+  @objc public func castPlayPause(_ invoke: Invoke) {
+    HushioDiag.append("alias", "castPlayPause -> cast_play_pause")
+    cast_play_pause(invoke)
+  }
+
+  @objc public func castSeek(_ invoke: Invoke) {
+    HushioDiag.append("alias", "castSeek -> cast_seek")
+    cast_seek(invoke)
+  }
+
+  @objc public func castStatus(_ invoke: Invoke) {
+    HushioDiag.append("alias", "castStatus -> cast_status")
+    cast_status(invoke)
+  }
+
+  @objc public func castStop(_ invoke: Invoke) {
+    HushioDiag.append("alias", "castStop -> cast_stop")
+    cast_stop(invoke)
+  }
+
+  @objc public func playerAppend(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerAppend -> player_append")
+    player_append(invoke)
+  }
+
+  @objc public func playerExit(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerExit -> player_exit")
+    player_exit(invoke)
+  }
+
+  @objc public func playerGetInsets(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerGetInsets -> player_get_insets")
+    player_get_insets(invoke)
+  }
+
+  @objc public func playerGetState(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerGetState -> player_get_state")
+    player_get_state(invoke)
+  }
+
+  @objc public func playerHapticTick(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerHapticTick -> player_haptic_tick")
+    player_haptic_tick(invoke)
+  }
+
+  @objc public func playerInsertNext(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerInsertNext -> player_insert_next")
+    player_insert_next(invoke)
+  }
+
+  @objc public func playerKeepAwake(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerKeepAwake -> player_keep_awake")
+    player_keep_awake(invoke)
+  }
+
+  @objc public func playerMove(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerMove -> player_move")
+    player_move(invoke)
+  }
+
+  @objc public func playerNext(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerNext -> player_next")
+    player_next(invoke)
+  }
+
+  @objc public func playerPause(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerPause -> player_pause")
+    player_pause(invoke)
+  }
+
+  @objc public func playerPlay(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerPlay -> player_play")
+    player_play(invoke)
+  }
+
+  @objc public func playerPrevious(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerPrevious -> player_previous")
+    player_previous(invoke)
+  }
+
+  @objc public func playerRemoveAt(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerRemoveAt -> player_remove_at")
+    player_remove_at(invoke)
+  }
+
+  @objc public func playerSeek(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerSeek -> player_seek")
+    player_seek(invoke)
+  }
+
+  @objc public func playerSetEq(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerSetEq -> player_set_eq")
+    player_set_eq(invoke)
+  }
+
+  @objc public func playerSetLike(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerSetLike -> player_set_like")
+    player_set_like(invoke)
+  }
+
+  @objc public func playerSetQueue(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerSetQueue -> player_set_queue")
+    player_set_queue(invoke)
+  }
+
+  @objc public func playerSetRepeat(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerSetRepeat -> player_set_repeat")
+    player_set_repeat(invoke)
+  }
+
+  @objc public func playerSetShuffle(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerSetShuffle -> player_set_shuffle")
+    player_set_shuffle(invoke)
+  }
+
+  @objc public func playerSetSkipSilence(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerSetSkipSilence -> player_set_skip_silence")
+    player_set_skip_silence(invoke)
+  }
+
+  @objc public func playerSetSleepTimer(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerSetSleepTimer -> player_set_sleep_timer")
+    player_set_sleep_timer(invoke)
+  }
+
+  @objc public func playerSetSpeed(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerSetSpeed -> player_set_speed")
+    player_set_speed(invoke)
+  }
+
+  @objc public func playerSetSystemBars(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerSetSystemBars -> player_set_system_bars")
+    player_set_system_bars(invoke)
+  }
+
+  @objc public func playerSetUrl(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerSetUrl -> player_set_url")
+    player_set_url(invoke)
+  }
+
+  @objc public func playerSetVolume(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerSetVolume -> player_set_volume")
+    player_set_volume(invoke)
+  }
+
+  @objc public func playerTakeLaunch(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerTakeLaunch -> player_take_launch")
+    player_take_launch(invoke)
+  }
+
+  @objc public func playerToggle(_ invoke: Invoke) {
+    HushioDiag.append("alias", "playerToggle -> player_toggle")
+    player_toggle(invoke)
+  }
 }
 
 @_cdecl("init_plugin_hushio_player")

@@ -25,6 +25,41 @@ import BackgroundTasks
 import Tauri
 import WebKit
 
+// MARK: - Diagnostics
+
+/// Appends a line to `<app data dir>/diag.log`.
+///
+/// A release iOS build has no reachable stdout and `devicectl --console` only shows output
+/// from a launch it started itself, so device-only failures had no evidence trail. The Rust
+/// `js_log` command writes the same file from the frontend; this is the Swift side of it.
+/// Bounded to 256 KiB and message-only: callers must never pass credentials, tokens or signed
+/// URLs (see the call sites, which log command names and codes).
+enum HushioDiag {
+  static func append(_ level: String, _ message: String) {
+    let limit = 256 * 1024
+    let fm = FileManager.default
+    guard let base = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return }
+    let bundleId = Bundle.main.bundleIdentifier ?? "com.hushio.app.iosdev"
+    let dir = base.appendingPathComponent(bundleId, isDirectory: true)
+    try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+    let file = dir.appendingPathComponent("diag.log")
+    if let size = (try? fm.attributesOfItem(atPath: file.path))?[.size] as? NSNumber,
+       size.intValue > limit {
+      try? fm.removeItem(at: file)
+    }
+    let stamp = Int(Date().timeIntervalSince1970 * 1000)
+    let line = "\(stamp) \(level) \(message)\n"
+    guard let data = line.data(using: .utf8) else { return }
+    if let handle = try? FileHandle(forWritingTo: file) {
+      defer { try? handle.close() }
+      _ = try? handle.seekToEnd()
+      try? handle.write(contentsOf: data)
+    } else {
+      try? data.write(to: file, options: .atomic)
+    }
+  }
+}
+
 // MARK: - Wire argument DTOs
 
 private struct KeyArgs: Decodable {

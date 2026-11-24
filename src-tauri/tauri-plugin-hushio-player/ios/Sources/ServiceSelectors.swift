@@ -93,4 +93,77 @@ extension HushioPlayerPlugin {
   @objc public func schedule(_ invoke: Invoke) {
     HushioServiceBridges.sync.schedule(invoke)
   }
+
+// MARK: - camelCase aliases (service bridges)
+// Tauri's mobile IPC has been observed delivering camelCase command names
+// (playerSetSpeed) to this plugin even though the JS bridge sends snake_case
+// (player_set_speed). Accept both spellings so a naming difference between the two
+// sides can never break a command: each alias simply forwards to the real selector,
+// and records that it was used in the diagnostics file.
+
+  @objc public func authAwait(_ invoke: Invoke) {
+    HushioDiag.append("alias", "authAwait -> auth_await")
+    auth_await(invoke)
+  }
+
+  @objc public func authOpen(_ invoke: Invoke) {
+    HushioDiag.append("alias", "authOpen -> auth_open")
+    auth_open(invoke)
+  }
+
+  @objc public func mediaStoreDelete(_ invoke: Invoke) {
+    HushioDiag.append("alias", "mediaStoreDelete -> media_store_delete")
+    media_store_delete(invoke)
+  }
+
+  @objc public func mediaStorePublish(_ invoke: Invoke) {
+    HushioDiag.append("alias", "mediaStorePublish -> media_store_publish")
+    media_store_publish(invoke)
+  }
+
+  @objc public func notificationRequest(_ invoke: Invoke) {
+    HushioDiag.append("alias", "notificationRequest -> notification_request")
+    notification_request(invoke)
+  }
+
+  @objc public func notificationSettings(_ invoke: Invoke) {
+    HushioDiag.append("alias", "notificationSettings -> notification_settings")
+    notification_settings(invoke)
+  }
+
+  @objc public func notificationState(_ invoke: Invoke) {
+    HushioDiag.append("alias", "notificationState -> notification_state")
+    notification_state(invoke)
+  }
+
+  @objc public func pickTree(_ invoke: Invoke) {
+    HushioDiag.append("alias", "pickTree -> pick_tree")
+    pick_tree(invoke)
+  }
+
+  @objc public func readSidecarLrc(_ invoke: Invoke) {
+    HushioDiag.append("alias", "readSidecarLrc -> read_sidecar_lrc")
+    read_sidecar_lrc(invoke)
+  }
+
+  @objc public func scanTree(_ invoke: Invoke) {
+    HushioDiag.append("alias", "scanTree -> scan_tree")
+    scan_tree(invoke)
+  }
+
+  @objc public func secureClear(_ invoke: Invoke) {
+    HushioDiag.append("alias", "secureClear -> secure_clear")
+    secure_clear(invoke)
+  }
+
+  @objc public func secureGet(_ invoke: Invoke) {
+    HushioDiag.append("alias", "secureGet -> secure_get")
+    secure_get(invoke)
+  }
+
+  @objc public func secureSet(_ invoke: Invoke) {
+    HushioDiag.append("alias", "secureSet -> secure_set")
+    secure_set(invoke)
+  }
+
 }
