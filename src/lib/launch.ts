@@ -1,4 +1,5 @@
 import {
+  adoptLaunchFile,
   launchTake,
   listenLaunchPending,
   listenPlayerEvent,
@@ -58,11 +59,8 @@ export async function routeLaunchTarget(target: LaunchTarget): Promise<void> {
     return;
   }
   if (platform === "ios") {
-    // Security-scoped file URLs on iOS require startAccessingSecurityScopedResource
-    // and durable bookmarks (see DocumentPicker.swift). Raw file path access fails
-    // or revokes across launches without a security-scoped bookmark.
-    // Documented as OPEN with the hardware verification blocker in docs/ios-port/LAUNCH_IOS.md.
-    console.warn(`[hushio] file launch routing on iOS is deferred pending physical device verification: ${target.uri}`);
+    const { uri } = await adoptLaunchFile(target.uri);
+    await playOpenedFile(uri);
     return;
   }
   await dropPaths([target.uri]);

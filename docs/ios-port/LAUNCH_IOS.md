@@ -67,19 +67,42 @@ Inspection of `tauri-plugin-deep-link` v2.6.3 (`Cargo.lock` / crates.io vendored
    - Reused the existing desktop `launchTake()` / `launch_take` IPC plumbing on iOS rather than inventing an ad-hoc mechanism.
    - Preserved `player_take_launch` as an honest `not_supported` rejection on iOS (avoiding fabricated Android intent adoption).
    - In `startLaunchActions()`, subscribed to `"deep-link://new-url"` alongside `listenLaunchPending` so that deep-link open events delivered by Tauri are converted to `LaunchAction`s and dispatched through `routeLaunchAction()`.
-   - In `routeLaunchTarget()`, added an explicit iOS branch for `target.kind === "file"` to prevent ungranted fallback to desktop `dropPaths` (which would fail due to missing security-scoped authorization).
+   - In `routeLaunchTarget()`, wired the iOS `target.kind === "file"` branch to adopt the launch file via `adoptLaunchFile` and route into `playOpenedFile`.
 
-4. **`src/lib/launch.test.ts`**:
-   Added comprehensive tests covering `launchActionForUrl`, iOS file launch deferral, deep-link event reception (`deep-link://new-url`), and clean unlistening.
+4. **`src/lib/bridge.ts`**:
+   - Added `adoptLaunchFile(url)` wrapper forwarding to `plugin:hushio-player|adopt_launch_file`.
+
+5. **`src-tauri/tauri-plugin-hushio-player/ios/Sources/HushioServicePlugins.swift`**:
+   - Added `adopt_launch_file` selector to `HushioAudioPlugin` and forwarded through `HushioPlayerPlugin`, converting `file://` URLs to durable security-scoped bookmarks via `HushioReference.persist`, returning `{ uri }` and rejecting with real failure codes (`invalid_argument`, `invalid_url`, `not_a_file`, `bookmark_failed`).
+
+6. **`src-tauri/src/android.rs`**:
+   - Added `adopt_launch_file` facade function in iOS `mod bridge` using `call_async_bounded` to invoke the mobile plugin selector.
+
+7. **`src/lib/launch.test.ts`**:
+   - Added comprehensive tests covering `launchActionForUrl`, iOS file launch routing through `adoptLaunchFile`, error propagation on bookmark failure, deep-link event reception (`deep-link://new-url`), and clean unlistening.
 
 ---
 
-## 3. Status of File Launch on iOS: Documented as OPEN
+## 3. Status of File Launch on iOS: Implemented (SRC), Device-Unverified
 
 iOS file URLs are security-scoped (`NSURL startAccessingSecurityScopedResource` and `stopAccessingSecurityScopedResource`).
 As established in `src-tauri/tauri-plugin-hushio-player/ios/Sources/DocumentPicker.swift`, durable file access across launches requires serializing a security-scoped bookmark (`HushioReference`).
 
-Routing `kind === "file"` directly into playback or library storage without a security-scoped bookmark fails as soon as the sandbox revokes access. Because creating and testing security-scoped bookmarks from launch requires an active device session, the file case is honestly documented as **OPEN** with blocker **H1** (`HUMAN_STEPS.md`). Custom scheme routing (`hushio://playlist?list=...`) is fully implemented.
+File launches delivered to the app now route through `adopt_launch_file` on `hushio-audio` / `HushioPlayerPlugin`, validating the target file and serializing a security-scoped bookmark via `HushioReference.persist`. Security-scoped access is bracketed with `startAccessingSecurityScopedResource` and `defer { stopAccessingSecurityScopedResource() }` on every exit path. The resulting opaque reference string is passed into `playOpenedFile(uri)`, mirroring Android's queue installation with `contentUri: uri`.
+
+### 3.1 Remaining Limitation in Native Audio Transport
+While launch adoption and bookmark persistence are source-complete (**SRC**), native playback in `PlayerEngine.swift` currently expects `contentUri` to be a directly resolvable file URL or POSIX path (`item.playbackURL` in `PlayerSnapshot.swift` calls `URL(string: text)` or `URL(fileURLWithPath: text)`). Because an opaque base64 bookmark reference string is not a file URL scheme, `item.playbackURL` returns `nil`, causing `PlayerEngine.loadCurrentItem` to call `awaitURL(item, reason: .missing)` (emitting `player-stream-needed`) rather than resolving the bookmark via `HushioReference.resolve(reference)` and scoping the `AVURLAsset` read.
+
+In accordance with ADR-007 (native transport ownership) and project rules, no parallel player was invented; the standard path was wired and this gap is honestly recorded.
+
+### 3.2 Exact Device Test to Close Parity
+To verify end-to-end on a physical device (post-signing blocker H1) or simulator:
+1. Transfer an audio file (`test.mp3`) to the iOS device or simulator Files container.
+2. In Files.app, select the file and share / open with Hushio.
+3. Observe Tauri delivering the open event via `deep-link://new-url` or `launch_take`.
+4. Observe `adopt_launch_file` returning `{ uri }` containing the base64 bookmark data.
+5. In `PlayerEngine`, verify the queue item is installed with the reference.
+6. Verify playback begins and continues across app restarts using the resolved security-scoped bookmark.
 
 ---
 

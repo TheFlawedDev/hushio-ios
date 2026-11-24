@@ -61,7 +61,7 @@ actually built and actually run.
 | OAuth via `ASWebAuthenticationSession` | **BLOCK** | Flow + URL scheme registered in Info.plist, but `HUSHIO_GOOGLE_CLIENT_ID` / `HUSHIO_SPOTIFY_CLIENT_ID` are not configured — documented configuration blocker, not a code gap |
 | Background sync retry (BGTaskScheduler) | **SRC** | `BGTaskSchedulerPermittedIdentifiers` added to `Info.ios.plist` and a launch handler is registered once in `HushioSyncPlugin.load`; `schedule` rejects `bg_task_not_registered` if the OS refuses, and the handler completes the task as failed rather than pretending the Rust queue ran. Best-effort by nature; device-unverified |
 | In-app updates | **N/A** | iOS distribution is Xcode dev signing / TestFlight / App Store; the updater row is hidden and `update` rejects |
-| Deep-link / custom scheme | **SRC** | `hushio` is declared in `Info.ios.plist` and now in `tauri.ios.conf.json` (`plugins.deep-link.mobile`); `launch.ts` subscribes to `deep-link://new-url` (the event `tauri-plugin-deep-link` emits from `RunEvent::Opened` on iOS) and routes playlist links through the shared layer. iOS **file** launches stay OPEN — security-scoped access needs a device test. Detail: `LAUNCH_IOS.md` |
+| Deep-link / custom scheme | **SRC** | `hushio` custom scheme declared in Info/config; `launch.ts` subscribes to `deep-link://new-url` and routes playlist links. File launches route through `adopt_launch_file` for security-scoped bookmark persistence (`HushioReference`) and into the player queue. Device-unverified; playback of bookmark references in PlayerEngine detailed in `LAUNCH_IOS.md` |
 
 ## 4. Shared product surface
 

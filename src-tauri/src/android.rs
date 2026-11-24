@@ -233,6 +233,11 @@ mod bridge {
         url: String,
     }
 
+    #[derive(Deserialize)]
+    struct AdoptLaunchReply {
+        uri: String,
+    }
+
     pub fn init(app: &AppHandle<Wry>) {
         let _ = APP.set(app.clone());
     }
@@ -353,6 +358,11 @@ mod bridge {
         call_bounded::<SidecarText>("read_sidecar_lrc", json!({ "uri": uri }))
             .ok()?
             .text
+    }
+
+    pub async fn adopt_launch_file(url: &str) -> Result<String, String> {
+        let reply: AdoptLaunchReply = call_async_bounded("adopt_launch_file", json!({ "url": url })).await?;
+        Ok(reply.uri)
     }
 
     pub fn media_delete(uri: &str) -> Result<(), String> {

@@ -301,6 +301,10 @@ export function playerTakeLaunch(): Promise<Partial<LaunchPayload>> {
   return playerCall<Partial<LaunchPayload>>("player_take_launch");
 }
 
+export function adoptLaunchFile(url: string): Promise<{ uri: string }> {
+  return playerCall<{ uri: string }>("adopt_launch_file", { url });
+}
+
 export type UpdateCheck =
   | { state: "current"; version: string }
   | { state: "available"; version: string; apkName: string; apkUrl: string; sumsUrl: string }

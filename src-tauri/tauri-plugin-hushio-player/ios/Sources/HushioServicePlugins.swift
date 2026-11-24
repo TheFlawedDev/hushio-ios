@@ -49,6 +49,10 @@ private struct AuthOpenArgs: Decodable {
   let url: String
 }
 
+private struct AdoptLaunchFileArgs: Decodable {
+  let url: String
+}
+
 // MARK: - Shared helpers
 
 /// Decode the raw command payload exactly like HushioPlayerPlugin's `args(_:_:)`.
@@ -248,6 +252,63 @@ final class HushioAudioPlugin: Plugin {
         var payload = JsonObject()
         payload["text"] = text ?? NSNull()
         invoke.resolve(payload)
+      }
+    }
+  }
+
+  /// `adopt_launch_file {url}` -> `{uri: String}`. Creates a security-scoped bookmark
+  /// for a file URL delivered by an open/launch event and returns the durable reference.
+  @objc public func adopt_launch_file(_ invoke: Invoke) {
+    let args: AdoptLaunchFileArgs
+    do {
+      args = try parse(AdoptLaunchFileArgs.self, from: invoke)
+    } catch {
+      invoke.reject("invalid_argument")
+      return
+    }
+
+    DispatchQueue.global(qos: .userInitiated).async {
+      let fileUrl: URL?
+      if let parsed = URL(string: args.url), parsed.scheme != nil {
+        fileUrl = parsed.isFileURL ? parsed : nil
+      } else if args.url.hasPrefix("/") {
+        fileUrl = URL(fileURLWithPath: args.url)
+      } else {
+        fileUrl = nil
+      }
+
+      guard let url = fileUrl else {
+        onMain { invoke.reject("invalid_url") }
+        return
+      }
+
+      let accessing = url.startAccessingSecurityScopedResource()
+      defer {
+        if accessing {
+          url.stopAccessingSecurityScopedResource()
+        }
+      }
+
+      var isDir: ObjCBool = false
+      let fm = FileManager.default
+      guard fm.fileExists(atPath: url.path, isDirectory: &isDir), !isDir.boolValue else {
+        onMain { invoke.reject("not_a_file") }
+        return
+      }
+
+      do {
+        let bookmark = try url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
+        guard let reference = HushioReference.persist(bookmark: bookmark, for: url) else {
+          onMain { invoke.reject("bookmark_failed") }
+          return
+        }
+        onMain {
+          var payload = JsonObject()
+          payload["uri"] = reference
+          invoke.resolve(payload)
+        }
+      } catch {
+        onMain { invoke.reject("bookmark_failed") }
       }
     }
   }
@@ -502,3 +563,9 @@ final class HushioSyncPlugin: Plugin {
 // `HushioServiceBridges` and exposed through the single registered plugin
 // (`init_plugin_hushio_player`, see ServiceSelectors.swift). Registering them as separate
 // iOS plugins deadlocks startup — see the note at the top of ServiceSelectors.swift.
+
+extension HushioPlayerPlugin {
+  @objc public func adopt_launch_file(_ invoke: Invoke) {
+    HushioServiceBridges.audio.adopt_launch_file(invoke)
+  }
+}

@@ -10,12 +10,14 @@ const hoisted = vi.hoisted(() => ({
   playerSetQueue: vi.fn(() => Promise.resolve({ accepted: 1 })),
   playerPlay: vi.fn(() => Promise.resolve()),
   playerTakeLaunch: vi.fn(() => Promise.resolve({} as Record<string, string>)),
+  adoptLaunchFile: vi.fn((url: string) => Promise.resolve({ uri: `bookmark-for:${url}` })),
   listenPlayerEvent: vi.fn(() => Promise.resolve(() => {})),
   platform: "windows",
   playTrack: vi.fn(),
 }));
 
 vi.mock("./bridge", () => ({
+  adoptLaunchFile: hoisted.adoptLaunchFile,
   launchTake: hoisted.take,
   listenLaunchPending: hoisted.listen,
   listenPlayerEvent: hoisted.listenPlayerEvent,
@@ -145,16 +147,40 @@ describe("launch targets", () => {
     expect(hoisted.dropPaths).not.toHaveBeenCalled();
   });
 
-  it("defers file launch on iOS with a warning, leaving dropPaths untouched", async () => {
+  it("routes an opened audio file on iOS through adoptLaunchFile and plays it", async () => {
     hoisted.platform = "ios";
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    await routeLaunchTarget({ kind: "file", uri: "file:///var/mobile/Containers/Data/Music/track.m4a" });
-    expect(hoisted.dropPaths).not.toHaveBeenCalled();
-    expect(hoisted.playerSetQueue).not.toHaveBeenCalled();
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("file launch routing on iOS is deferred pending physical device verification"),
+    const fileUrl = "file:///var/mobile/Containers/Data/Music/track.m4a";
+    hoisted.adoptLaunchFile.mockResolvedValueOnce({ uri: "base64-bookmark-ref-123" });
+
+    await routeLaunchTarget({ kind: "file", uri: fileUrl });
+
+    expect(hoisted.adoptLaunchFile).toHaveBeenCalledWith(fileUrl);
+    expect(hoisted.playerSetQueue).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({
+          id: "base64-bookmark-ref-123",
+          contentUri: "base64-bookmark-ref-123",
+          url: "",
+          expiresAtEpochMs: null,
+        }),
+      ],
+      0,
+      0,
     );
-    warnSpy.mockRestore();
+    expect(hoisted.playerPlay).toHaveBeenCalledTimes(1);
+    expect(hoisted.dropPaths).not.toHaveBeenCalled();
+  });
+
+  it("propagates adoptLaunchFile failure when opening a file on iOS", async () => {
+    hoisted.platform = "ios";
+    hoisted.adoptLaunchFile.mockRejectedValueOnce(new Error("bookmark_failed"));
+
+    await expect(
+      routeLaunchTarget({ kind: "file", uri: "file:///var/mobile/missing.mp3" }),
+    ).rejects.toThrow("bookmark_failed");
+
+    expect(hoisted.playerSetQueue).not.toHaveBeenCalled();
+    expect(hoisted.playerPlay).not.toHaveBeenCalled();
   });
 });
 
