@@ -5,7 +5,7 @@ import { reducedMotion } from "../../lib/motion";
 import { PRESS_SLOP_PX, pressMoved, type Point } from "../../lib/touchGesture";
 
 type PressRowProps = {
-  label: string;
+  label?: string;
   className?: string;
   contentClassName?: string;
   onPress?: () => void;
@@ -13,9 +13,20 @@ type PressRowProps = {
   onLongPress?: (point: Point) => void;
   longPressMs?: number;
   children: ReactNode;
+  "aria-current"?: boolean | "true" | "false" | "page" | "step" | "location" | "date" | "time";
 };
 
-export function PressRow({ label, className = "", contentClassName = "", onPress, onPressStart, onLongPress, longPressMs, children }: PressRowProps) {
+export function PressRow({
+  label,
+  className = "",
+  contentClassName = "",
+  onPress,
+  onPressStart,
+  onLongPress,
+  longPressMs,
+  children,
+  "aria-current": ariaCurrent,
+}: PressRowProps) {
   const reduced = reducedMotion();
   const [pressed, setPressed] = useState(false);
   const origin = useRef<Point | null>(null);
@@ -73,6 +84,7 @@ export function PressRow({ label, className = "", contentClassName = "", onPress
     <button
       type="button"
       aria-label={label}
+      aria-current={ariaCurrent}
       className={`relative flex min-h-12 w-full touch-pan-y items-center text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus ${className}`}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}

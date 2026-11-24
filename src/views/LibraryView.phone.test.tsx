@@ -97,13 +97,13 @@ describe("Library on phone", () => {
   it("starts a new playlist from the empty Playlists row", () => {
     render(<LibraryView />);
     expect(screen.getByText("Start one with songs you like")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "New playlist" }));
+    fireEvent.click(screen.getByRole("button", { name: /New playlist/ }));
     expect(useUI.getState().dialog?.title).toBe("New playlist");
   });
 
   it("opens Import from a tile in the grid", () => {
     render(<LibraryView />);
-    fireEvent.click(screen.getByRole("button", { name: "Import" }));
+    fireEvent.click(screen.getByRole("button", { name: /Import/ }));
     expect(useNavigation.getState().view).toEqual({ name: "import" });
   });
 
@@ -133,7 +133,7 @@ describe("Library on phone", () => {
       folders: [],
     });
     render(<LibraryView />);
-    const tile = screen.getByRole("button", { name: "Road" });
+    const tile = screen.getByRole("button", { name: /Road/ });
     expect(within(tile).getByText("Pinned,")).toBeTruthy();
     expect(within(tile).getByText("Playlist · 2 songs")).toBeTruthy();
     expect(tile.querySelector("svg")).toBeTruthy();
@@ -150,7 +150,7 @@ describe("Library on phone", () => {
     const section = screen.getByRole("region", { name: "Playlists" });
     const list = section.querySelector("ul");
     expect(list?.className).toContain("grid-cols-2");
-    const newPlaylist = within(section).getByRole("button", { name: "New playlist" });
+    const newPlaylist = within(section).getByRole("button", { name: /New playlist/ });
     expect(newPlaylist.querySelector(".border-line.bg-surface.text-accent")).toBeTruthy();
     expect(list?.lastElementChild?.contains(newPlaylist)).toBe(true);
   });
@@ -171,7 +171,7 @@ describe("Library on phone", () => {
     useSettings.setState({ libraryLayout: "list" });
     render(<LibraryView />);
     expect(screen.getByRole("button", { name: "Switch to grid view" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Liked Songs" }).closest("li")?.parentElement?.className ?? "").not.toContain(
+    expect(screen.getByRole("button", { name: /Liked Songs/ }).closest("li")?.parentElement?.className ?? "").not.toContain(
       "grid-cols-2",
     );
   });

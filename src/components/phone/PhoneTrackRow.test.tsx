@@ -12,7 +12,7 @@ vi.mock("../../lib/persist", () => ({
   }),
 }));
 
-import { PhoneSongRow } from "./PhoneTrackRow";
+import { PhoneSongRow, PhoneTrackRow } from "./PhoneTrackRow";
 import type { SearchSong } from "../../lib/searchParse";
 import { useLibrary } from "../../stores/library";
 
@@ -100,5 +100,58 @@ describe("PhoneSongRow like state", () => {
   it("shows no heart on a song that is not liked", () => {
     renderRow(false, false);
     expect(screen.queryByRole("img", { name: "Liked" })).toBeNull();
+  });
+});
+
+describe("PhoneTrackRow accessible name and state", () => {
+  afterEach(cleanup);
+
+  it("exposes song title and artist in accessible name and sets aria-current on the playing song", () => {
+    const { rerender } = renderRow(true, true);
+    const playingButton = screen.getByRole("button", { name: /Play Physical by Dua Lipa/ });
+    expect(playingButton).toBeTruthy();
+    expect(playingButton.getAttribute("aria-current")).toBe("true");
+
+    rerender(
+      <ol>
+        <PhoneSongRow
+          index={0}
+          song={song}
+          current={false}
+          playing={false}
+          menu={() => []}
+          onPlay={() => {}}
+        />
+      </ol>,
+    );
+    const idleButton = screen.getByRole("button", { name: /Play Physical by Dua Lipa/ });
+    expect(idleButton.getAttribute("aria-current")).toBeNull();
+  });
+
+  it("exposes track title and artist in queue PhoneTrackRow and sets aria-current when active", () => {
+    const { rerender } = render(
+      <PhoneTrackRow
+        track={{ ...song, id: "t1", title: "Track Title", artist: "Track Artist" }}
+        index={0}
+        active={true}
+        onPress={() => {}}
+        onMore={() => {}}
+      />,
+    );
+    const queueButton = screen.getByRole("button", { name: /Play Track Title by Track Artist/ });
+    expect(queueButton).toBeTruthy();
+    expect(queueButton.getAttribute("aria-current")).toBe("true");
+
+    rerender(
+      <PhoneTrackRow
+        track={{ ...song, id: "t1", title: "Track Title", artist: "Track Artist" }}
+        index={0}
+        active={false}
+        onPress={() => {}}
+        onMore={() => {}}
+      />,
+    );
+    const idleQueueButton = screen.getByRole("button", { name: /Play Track Title by Track Artist/ });
+    expect(idleQueueButton.getAttribute("aria-current")).toBeNull();
   });
 });

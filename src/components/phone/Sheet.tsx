@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import { motion, useTransform } from "motion/react";
 import { fade, phoneSmooth, phoneTransition, reducedMotion } from "../../lib/motion";
 import { INSET_BOTTOM } from "../../lib/phoneNav";
@@ -37,6 +37,67 @@ export function Sheet({ label, onClose, header, height, zClass = "z-[115]", chil
     if (!reduced) drag.y.set(travel.current || viewportHeight());
   }, []);
 
+  useEffect(() => {
+    const priorFocus = document.activeElement as HTMLElement | null;
+    const timer = setTimeout(() => {
+      if (!panel.current) return;
+      const closeBtn = panel.current.querySelector<HTMLElement>('button[aria-label="Close"]');
+      if (closeBtn) {
+        closeBtn.focus();
+      } else {
+        const focusable = panel.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        );
+        if (focusable.length > 0) {
+          focusable[0].focus();
+        } else {
+          panel.current.focus();
+        }
+      }
+    }, 16);
+
+    return () => {
+      clearTimeout(timer);
+      priorFocus?.focus?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        onClose();
+        return;
+      }
+      if (event.key === "Tab") {
+        const container = panel.current;
+        if (!container) return;
+        const focusable = Array.from(
+          container.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          ),
+        );
+        if (focusable.length === 0) {
+          event.preventDefault();
+          container.focus();
+          return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const current = document.activeElement;
+        if (event.shiftKey && (current === first || !container.contains(current))) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && current === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
+  }, [onClose]);
+
   return (
     <motion.div className={`fixed inset-0 ${zClass} flex flex-col justify-end`}>
       <motion.div
@@ -54,14 +115,23 @@ export function Sheet({ label, onClose, header, height, zClass = "z-[115]", chil
         role="dialog"
         aria-modal="true"
         aria-label={label}
+        tabIndex={-1}
         initial={reduced ? { opacity: 0 } : undefined}
         animate={{ y: 0, opacity: 1 }}
         exit={reduced ? { opacity: 0 } : { y: travel.current || viewportHeight() }}
         transition={phoneTransition(reduced, phoneSmooth)}
         {...drag.handlers}
-        className="relative flex w-full flex-col overflow-hidden rounded-t-[20px] bg-elevated text-ink-1 will-change-transform"
+        className="relative flex w-full flex-col overflow-hidden rounded-t-[20px] bg-elevated text-ink-1 outline-none will-change-transform"
         style={{ height, maxHeight: "90vh", paddingBottom: INSET_BOTTOM, y: drag.y }}
       >
+        <button
+          type="button"
+          aria-label="Close"
+          onClick={onClose}
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:right-4 focus:z-10 focus:rounded-full focus:bg-surface focus:px-3 focus:py-1 focus:text-meta focus:text-ink-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+        >
+          Close
+        </button>
         <div data-sheet-grab className="flex shrink-0 cursor-grab touch-none flex-col items-center pb-1 pt-2">
           <span aria-hidden="true" className="h-1 w-9 rounded-full bg-ink-3" />
         </div>

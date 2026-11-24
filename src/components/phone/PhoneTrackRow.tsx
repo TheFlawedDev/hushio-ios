@@ -69,7 +69,10 @@ export function PhoneTrackRow({
       <SwipeRow swipeLeft={swipeLeft} swipeRight={swipeRight} enabled={!dragging}>
         <div className="flex h-full items-center">
           <PressRow
-            label={`Play ${track.title}`}
+            // Composed from the row's metadata (audit P1 #3): an override that named only the
+            // title silenced the artist; dropping the override lost the action verb.
+            label={`Play ${track.title}${track.artist ? ` by ${track.artist}` : ""}`}
+            aria-current={active ? "true" : undefined}
             className="h-full min-w-0 flex-1 pl-4 pr-1"
             contentClassName="gap-3"
             onPress={onPress}
@@ -82,7 +85,7 @@ export function PhoneTrackRow({
               <span className="truncate text-meta leading-[18px] text-ink-2">{track.artist}</span>
             </span>
             {active && (
-              <span className="shrink-0 text-ink-1">
+              <span aria-hidden="true" className="shrink-0 text-ink-1">
                 <PhoneIcon icon={SpeakerHigh} />
               </span>
             )}
@@ -161,7 +164,8 @@ export function PhoneSongRow({
       <SwipeRow swipeLeft={sortable ? undefined : swipeLeft} swipeRight={sortable ? undefined : swipeRight} enabled={!sortable}>
         <div className="flex h-full items-center">
           <PressRow
-            label={`Play ${song.title}`}
+            label={`Play ${song.title}${song.artist ? ` by ${song.artist}` : ""}`}
+            aria-current={current ? "true" : undefined}
             className="h-full min-w-0 flex-1"
             contentClassName="gap-3"
             onPress={onPlay}
@@ -170,7 +174,7 @@ export function PhoneSongRow({
             onLongPress={sortable ? undefined : (point) => useUI.getState().openContextMenu(point.x, point.y, resolveMenu(menu))}
           >
             {numbered ? (
-              <span className="flex w-6 shrink-0 justify-center text-meta tabular-nums text-ink-2">
+              <span aria-hidden="true" className="flex w-6 shrink-0 justify-center text-meta tabular-nums text-ink-2">
                 {current ? <EqBars playing={animate} /> : index + 1}
               </span>
             ) : (

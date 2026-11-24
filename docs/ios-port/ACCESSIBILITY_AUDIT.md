@@ -49,6 +49,7 @@ The iPhone shell features high baseline design preservation, progressive gesture
 - **Defect**: Missing accessible close button inside the modal section. The backdrop dismissal element is marked `aria-hidden="true"`, preventing VoiceOver focus. Furthermore, `useSheetDrag` listens only for pointer down/drag gestures with no `Escape` key handler or focus trap.
 - **iOS Impact**: A VoiceOver user who opens an Action Menu, Context Menu, Song Info sheet, or Playlist Edit sheet cannot dismiss it without executing a physical downward drag gesture. Because touch gestures are intercepted by VoiceOver cursor navigation, the user is trapped inside the sheet.
 - **Fix Suggestion**: Add an accessible `<button type="button" aria-label="Close" onClick={onClose}>` inside the sheet grab/header bar, remove the click listener from the `aria-hidden` scrim, and attach an Escape key dismissal handler.
+- **Status**: Implemented — added accessible Close button, Escape key dismissal, initial focus transfer, focus restoration, and Tab focus containment to `Sheet.tsx`.
 
 #### 2. Focus leakage and missing focus containment in Phone Now Playing
 - **File & Line**: `src/components/phone/PhoneNowPlaying.tsx:623-634` & `src/components/phone/PhoneShell.tsx:100`
@@ -61,6 +62,7 @@ The iPhone shell features high baseline design preservation, progressive gesture
 - **Defect**: When `PhoneNowPlaying` opens, focus is never shifted inside the sheet, and no focus trap exists. Setting `pointer-events-none` on `<motion.main>` disables pointer interaction but does NOT remove elements from the accessibility tree (missing `aria-hidden="true"` or HTML `inert`).
 - **iOS Impact**: VoiceOver swipe-navigation leaks past Now Playing controls directly into the underlying Home, Search, or Library view underneath the sheet, reading hidden content and disorienting the user.
 - **Fix Suggestion**: Add `aria-hidden={nowPlayingOpen}` and `inert={nowPlayingOpen || undefined}` to `<motion.main>`, and programmatically move focus to the "Close Now Playing" button upon mount.
+- **Status**: Implemented — added `aria-hidden` and `inert` to `<motion.main>` and dock when Now Playing is open; added initial focus transfer to Close button, Tab focus containment, Escape dismissal, and focus restoration to `PhoneNowPlaying.tsx`.
 
 #### 3. `PressRow` and `PhoneLibraryTile` `aria-label` override masks artist, subtitle, and pinned metadata
 - **File & Line**: `src/components/phone/PressRow.tsx:73-76`, `src/components/phone/PhoneTrackRow.tsx:71-78, 163-171`, `src/components/phone/PhoneLibraryRows.tsx:94, 168`
@@ -91,6 +93,7 @@ The iPhone shell features high baseline design preservation, progressive gesture
 - **Defect**: By setting `aria-label={`Play ${song.title}`}` on `PressRow` and `aria-label={title}` on `PhoneLibraryTile`, the browser's accessibility tree ignores all child text nodes. The artist name, album, track count subtitle, and `<span className="sr-only">Pinned, </span>` are completely obliterated from the screen-reader announcement.
 - **iOS Impact**: VoiceOver announces only the song title (e.g. "Play Blank Space") without artist or album, and library collections without their item counts or pinned status.
 - **Fix Suggestion**: Remove the `aria-label` attribute from `PressRow` to allow natural text concatenation of title, artist, and subtitle, or construct a full composite label: `label={`Play ${song.title} by ${artist}`}`.
+- **Status**: Implemented — removed `aria-label` override from `PressRow` (optional `label`), `PhoneTrackRow`, `PhoneSongRow`, `PhoneLibraryRow`, and `PhoneLibraryTile`, allowing natural accessible name composition from title, artist, and pinned/subtitle metadata while keeping decorative art elements `aria-hidden`.
 
 #### 4. Active playing state indicator silenced inside `aria-hidden` container
 - **File & Line**: `src/components/phone/PhoneTrackRow.tsx:177-184`, `src/components/phone/PhoneSearchRows.tsx:84-88`, `src/components/phone/PhoneTrackRow.tsx:84-88`
@@ -109,6 +112,7 @@ The iPhone shell features high baseline design preservation, progressive gesture
 - **Defect**: `EqBars` contains `role="img" aria-label="Playing"`, but it is rendered as a child of `<span aria-hidden="true">` inside `PhoneArt` (which itself declares `aria-hidden="true"`). In queue rows (`PhoneTrackRow.tsx:84`), the active state is rendered as an unlabelled `<PhoneIcon icon={SpeakerHigh} />`.
 - **iOS Impact**: A VoiceOver user cannot determine which track in an album, playlist, search result, or queue is currently playing.
 - **Fix Suggestion**: Add `aria-current={current ? "true" : undefined}` or a dedicated `<span className="sr-only">Currently playing</span>` inside the row's interactive button.
+- **Status**: Implemented — added `aria-current` to `PressRow`, `PhoneTrackRow`, `PhoneSongRow`, and `PhoneSearchRows` when current/active, keeping decorative `EqBars` and speaker icons `aria-hidden`.
 
 #### 5. Queue item reordering and removal impossible for assistive technology users
 - **File & Line**: `src/components/phone/PhoneQueueSheet.tsx:265-285`
@@ -131,6 +135,7 @@ The iPhone shell features high baseline design preservation, progressive gesture
 - **Defect**: Queue track reordering is driven exclusively by continuous `pointerdown` and `pointermove` capture (`beginDrag`), with no keyboard or VoiceOver accessible alternative. Upcoming track removal is bound exclusively to `swipeLeft` on the row; `trackMenuItems` (`src/lib/trackActions.ts`) does not contain a "Remove from queue" item.
 - **iOS Impact**: VoiceOver users cannot reorder tracks in the upcoming queue and cannot remove tracks from the queue.
 - **Fix Suggestion**: Add "Remove from queue" to the row's more options menu (`onMore`), and provide accessible "Move up" / "Move down" actions on the reorder handle.
+- **Status**: Implemented — added accessible "Move up", "Move down", and "Remove from queue" controls on upcoming queue rows, keyboard ArrowUp/ArrowDown reordering on drag handles, and Move up/down/remove actions in the context menu in `PhoneQueueSheet.tsx`.
 
 #### 6. Replay story slide progression cannot be triggered by VoiceOver
 - **File & Line**: `src/components/phone/ReplayStories.tsx:144-148, 219-226`
@@ -145,6 +150,7 @@ The iPhone shell features high baseline design preservation, progressive gesture
 - **Defect**: When Reduce Motion is enabled or the story is paused, advancing between story slides relies on raw pointer coordinates in `onUp` (tapping left 30% goes back, right 70% goes forward). No accessible buttons, `aria-roledescription="carousel"`, or rotor actions are provided.
 - **iOS Impact**: VoiceOver activation double-taps activate the focused DOM element rather than generating coordinate-based taps, completely stranding screen-reader users on the first slide.
 - **Fix Suggestion**: Add explicit, accessible "Previous slide" and "Next slide" buttons with `aria-label` inside the story chrome.
+- **Status**: Implemented — added accessible "Previous slide" and "Next slide" buttons with `aria-label` and `aria-live` slide announcement in `ReplayStories.tsx`.
 
 ---
 

@@ -76,10 +76,11 @@ export function PhoneTrackRow({ song, query }: { song: SearchSong; query: string
     >
       <button
         type="button"
+        aria-current={current ? "true" : undefined}
         onClick={() => playSong(song, query)}
         className="flex h-full min-w-0 flex-1 items-center gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
-        <span className="relative block size-12 shrink-0">
+        <span aria-hidden="true" className="relative block size-12 shrink-0">
           <Artwork src={song.thumb} size="h-12 w-12" radius="rounded-[6px]" />
           {current && (
             <span aria-hidden="true" className="absolute inset-0 grid place-items-center rounded-[6px] bg-scrim/40 text-on-scrim">

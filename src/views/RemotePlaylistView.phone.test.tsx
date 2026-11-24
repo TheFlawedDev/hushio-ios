@@ -87,8 +87,8 @@ describe("RemotePlaylistView on phone", () => {
     getPlaylistPage.mockResolvedValue(page("Mira", songs(2)));
     render(<><RemotePlaylistView /><ContextMenu /></>);
 
-    expect(await screen.findByRole("button", { name: "Play Mix 0" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Play Mix 1" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: /Play Mix 0/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Play Mix 1/ })).toBeTruthy();
     expect(screen.queryByText("2")).toBeNull();
   });
 

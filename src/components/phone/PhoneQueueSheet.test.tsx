@@ -14,8 +14,10 @@ vi.mock("../../lib/persist", () => ({
 }));
 
 import { PhoneQueueList } from "./PhoneQueueSheet";
+import { Sheet } from "./Sheet";
 import { usePlayer } from "../../stores/player";
 import { useSettings } from "../../stores/settings";
+import { useUI } from "../../stores/ui";
 import type { Track } from "../../types";
 
 const first: Track = { id: "q1", title: "First", artist: "Band", thumb: null };
@@ -166,5 +168,107 @@ describe("PhoneQueueList sections and modes", () => {
     expect(useSettings.getState().autoplay).toBe(false);
     fireEvent.click(screen.getByRole("button", { name: "Enable autoplay" }));
     expect(useSettings.getState().autoplay).toBe(true);
+  });
+});
+
+describe("PhoneQueueSheet accessibility", () => {
+  const fourth: Track = { id: "q4", title: "Fourth", artist: "Band", thumb: null };
+
+  beforeEach(() => {
+    usePlayer.setState({ queue: [first, second, third, fourth], index: 0, autoplayCount: 0 });
+  });
+
+  it("exposes accessible Move up and Move down buttons for upcoming tracks", () => {
+    render(<PhoneQueueList />);
+    const moveDownSecond = screen.getByRole("button", { name: "Move Second down" });
+
+    fireEvent.click(moveDownSecond);
+    expect(usePlayer.getState().queue.map((t) => t.id)).toEqual(["q1", "q3", "q2", "q4"]);
+
+    const moveUpSecond = screen.getByRole("button", { name: "Move Second up" });
+    fireEvent.click(moveUpSecond);
+    expect(usePlayer.getState().queue.map((t) => t.id)).toEqual(["q1", "q2", "q3", "q4"]);
+  });
+
+  it("supports keyboard ArrowUp and ArrowDown reordering on the drag handle", () => {
+    render(<PhoneQueueList />);
+    const handle = screen.getByRole("button", { name: "Drag Second to reorder" });
+
+    fireEvent.keyDown(handle, { key: "ArrowDown" });
+    expect(usePlayer.getState().queue.map((t) => t.id)).toEqual(["q1", "q3", "q2", "q4"]);
+
+    const newHandle = screen.getByRole("button", { name: "Drag Second to reorder" });
+    fireEvent.keyDown(newHandle, { key: "ArrowUp" });
+    expect(usePlayer.getState().queue.map((t) => t.id)).toEqual(["q1", "q2", "q3", "q4"]);
+  });
+
+  it("exposes accessible remove from queue button that removes track", () => {
+    render(<PhoneQueueList />);
+    const removeBtn = screen.getByRole("button", { name: "Remove Second from queue" });
+    fireEvent.click(removeBtn);
+    expect(usePlayer.getState().queue.map((t) => t.id)).toEqual(["q1", "q3", "q4"]);
+  });
+
+  it("adds Move and Remove actions to more options context menu", () => {
+    render(<PhoneQueueList />);
+    const moreBtn = screen.getByRole("button", { name: "More options for Second" });
+    fireEvent.click(moreBtn);
+
+    const menu = useUI.getState().contextMenu;
+    expect(menu).not.toBeNull();
+    const labels = menu?.items.map((i) => i.label);
+    expect(labels).toContain("Move down");
+    expect(labels).toContain("Remove from queue");
+  });
+});
+
+describe("Sheet accessibility", () => {
+  it("provides an accessible Close button and closes when activated", () => {
+    const onClose = vi.fn();
+    render(
+      <Sheet label="Test Sheet" onClose={onClose}>
+        <p>Sheet content</p>
+      </Sheet>,
+    );
+    const closeBtn = screen.getByRole("button", { name: "Close" });
+    expect(closeBtn).toBeTruthy();
+    fireEvent.click(closeBtn);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("closes the sheet when Escape key is pressed", () => {
+    const onClose = vi.fn();
+    render(
+      <Sheet label="Test Sheet" onClose={onClose}>
+        <p>Sheet content</p>
+      </Sheet>,
+    );
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("contains Tab focus inside the sheet", () => {
+    render(
+      <Sheet label="Test Sheet" onClose={() => {}}>
+        <button type="button">Inside Button</button>
+      </Sheet>,
+    );
+    const dialog = screen.getByRole("dialog", { name: "Test Sheet" });
+    const focusable = Array.from(
+      dialog.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    );
+    expect(focusable.length).toBeGreaterThanOrEqual(2);
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    first.focus();
+    fireEvent.keyDown(window, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(last);
+
+    last.focus();
+    fireEvent.keyDown(window, { key: "Tab", shiftKey: false });
+    expect(document.activeElement).toBe(first);
   });
 });

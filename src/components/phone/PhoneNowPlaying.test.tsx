@@ -366,4 +366,38 @@ describe("phone seeking safeguards", () => {
     fireEvent.keyDown(el, { key: "End" });
     expect(seekTo).not.toHaveBeenCalled();
   });
+
+  it("moves initial focus to the Close button and closes on Escape", async () => {
+    useUI.setState({ nowPlayingOpen: true });
+    render(<PhoneNowPlaying />);
+    const closeBtn = screen.getByRole("button", { name: "Close Now Playing" });
+    await waitFor(() => expect(document.activeElement).toBe(closeBtn));
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    await waitFor(() => expect(useUI.getState().nowPlayingOpen).toBe(false));
+  });
+
+  it("contains focus within the dialog when Tab is pressed", async () => {
+    useUI.setState({ nowPlayingOpen: true });
+    render(<PhoneNowPlaying />);
+    const dialog = screen.getByRole("dialog", { name: "Now playing" });
+    const focusable = Array.from(
+      dialog.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    );
+    expect(focusable.length).toBeGreaterThan(1);
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    first.focus();
+    expect(document.activeElement).toBe(first);
+    fireEvent.keyDown(window, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(last);
+
+    last.focus();
+    expect(document.activeElement).toBe(last);
+    fireEvent.keyDown(window, { key: "Tab", shiftKey: false });
+    expect(document.activeElement).toBe(first);
+  });
 });

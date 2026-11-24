@@ -91,7 +91,7 @@ type PhoneLibraryRowProps = {
 
 export function PhoneLibraryRow({ title, subtitle, pinned, art, onOpen, onLongPress }: PhoneLibraryRowProps) {
   return (
-    <PressRow label={title} className="h-16" contentClassName="gap-3" onPress={onOpen} onLongPress={onLongPress}>
+    <PressRow className="h-16" contentClassName="gap-3" onPress={onOpen} onLongPress={onLongPress}>
       {art}
       <span className="min-w-0 flex-1">
         <span className="block truncate text-body leading-[22px] text-ink-1">{title}</span>
@@ -165,7 +165,6 @@ export function PhoneLibraryTile({ title, subtitle, pinned, covers = [], fallbac
   return (
     <motion.button
       type="button"
-      aria-label={title}
       {...hold.bind}
       onClick={() => {
         if (!hold.consumeHold()) onOpen();

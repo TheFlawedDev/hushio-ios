@@ -97,7 +97,12 @@ export function PhoneShell() {
           style={{ height: INSET_TOP }}
         />
         <motion.div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0" style={{ x: edge.x, opacity: edge.shadow, boxShadow: "-12px 0 24px rgb(0 0 0)" }} />
-        <motion.main style={{ x: edge.x }} className={`relative isolate z-0 min-h-0 flex-1 overflow-hidden will-change-transform ${nowPlayingOpen ? "pointer-events-none" : ""}`}>
+        <motion.main
+          style={{ x: edge.x }}
+          aria-hidden={nowPlayingOpen ? true : undefined}
+          inert={nowPlayingOpen || undefined}
+          className={`relative isolate z-0 min-h-0 flex-1 overflow-hidden will-change-transform ${nowPlayingOpen ? "pointer-events-none" : ""}`}
+        >
           <div
             id="view-scroll"
             className="no-scrollbar h-full overflow-y-auto overflow-x-hidden"
@@ -125,7 +130,11 @@ export function PhoneShell() {
           </div>
           <motion.div aria-hidden="true" className="pointer-events-none absolute inset-0 z-10 bg-scrim" style={{ opacity: edge.shade }} />
         </motion.main>
-        <div className="absolute inset-x-0 bottom-0 z-20 overflow-hidden rounded-t-[24px] border-t border-separator bg-surface shadow-[0_-4px_24px_rgb(0_0_0/0.12)]">
+        <div
+          aria-hidden={nowPlayingOpen ? true : undefined}
+          inert={nowPlayingOpen || undefined}
+          className="absolute inset-x-0 bottom-0 z-20 overflow-hidden rounded-t-[24px] border-t border-separator bg-surface shadow-[0_-4px_24px_rgb(0_0_0/0.12)]"
+        >
           <MiniPlayer />
           <TabBar />
           <div aria-hidden="true" className="bg-surface" style={{ height: INSET_BOTTOM }} />

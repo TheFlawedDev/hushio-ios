@@ -118,4 +118,21 @@ describe("ReplayStories", () => {
     screen.getByRole("button", { name: "Try again" }).click();
     expect(props.onRetry).toHaveBeenCalledTimes(1);
   });
+
+  it("exposes accessible Next and Previous slide buttons that navigate slides", async () => {
+    renderStories();
+    const prevBtn = screen.getByRole("button", { name: "Previous slide" });
+    const nextBtn = screen.getByRole("button", { name: "Next slide" });
+
+    expect(prevBtn).toHaveProperty("disabled", true);
+    expect(await screen.findByRole("region", { name: "Your Replay" })).toBeTruthy();
+
+    fireEvent.click(nextBtn);
+    expect(await screen.findByRole("region", { name: "Top songs" })).toBeTruthy();
+    expect(prevBtn).toHaveProperty("disabled", false);
+
+    fireEvent.click(prevBtn);
+    expect(await screen.findByRole("region", { name: "Your Replay" })).toBeTruthy();
+    expect(prevBtn).toHaveProperty("disabled", true);
+  });
 });

@@ -4,10 +4,18 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 const phone = vi.hoisted(() => ({ value: true }));
 
 vi.mock("../../lib/usePhone", () => ({ usePhone: () => phone.value }));
+vi.mock("../../lib/persist", () => ({
+  persistStorage: () => ({
+    getItem: async () => null,
+    setItem: async () => {},
+    removeItem: async () => {},
+  }),
+}));
 
 import { Artwork } from "../SearchRows";
 import { PhoneTrackRow } from "./PhoneSearchRows";
 import type { SearchSong } from "../../lib/searchParse";
+import { usePlayer } from "../../stores/player";
 
 const ART = "https://lh3.googleusercontent.com/abc=w544-h544-l90-rj";
 
@@ -72,5 +80,33 @@ describe("PhoneTrackRow", () => {
     expect(screen.queryByRole("button", { name: "Like" })).toBeNull();
     expect(screen.getByRole("button", { name: "More options for Physical" }).className).toContain("h-11 w-11");
     expect(screen.getByRole("button", { name: /^Physical/ }).querySelector("img")?.className).toContain("h-12 w-12");
+  });
+
+  it("exposes song title and artist in accessible name and sets aria-current when playing", () => {
+    usePlayer.setState({
+      queue: [{ id: song.id, title: song.title, artist: song.artist, thumb: song.thumb, duration: song.duration, album: null }],
+      index: 0,
+      playing: true,
+    });
+
+    const { rerender } = render(
+      <ul>
+        <PhoneTrackRow song={song} query="dua" />
+      </ul>,
+    );
+
+    const playingButton = screen.getByRole("button", { name: "Physical Dua Lipa" });
+    expect(playingButton).toBeTruthy();
+    expect(playingButton.getAttribute("aria-current")).toBe("true");
+
+    usePlayer.setState({ queue: [], index: 0, playing: false });
+    rerender(
+      <ul>
+        <PhoneTrackRow song={song} query="dua" />
+      </ul>,
+    );
+
+    const idleButton = screen.getByRole("button", { name: "Physical Dua Lipa" });
+    expect(idleButton.getAttribute("aria-current")).toBeNull();
   });
 });

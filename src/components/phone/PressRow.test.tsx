@@ -97,4 +97,16 @@ describe("PressRow", () => {
     pointer("pointerUp", row, 0, 9);
     expect(onPress).toHaveBeenCalledTimes(1);
   });
+
+  it("derives accessible name from children when label is omitted and exposes aria-current", () => {
+    render(
+      <PressRow aria-current="true">
+        <span>Track Title</span>
+        <span>Track Artist</span>
+      </PressRow>,
+    );
+    const row = screen.getByRole("button", { name: "Track Title Track Artist" });
+    expect(row).toBeTruthy();
+    expect(row.getAttribute("aria-current")).toBe("true");
+  });
 });

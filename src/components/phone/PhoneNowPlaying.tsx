@@ -500,6 +500,62 @@ function NowPlayingSheet() {
     if (reducedMotion() || sheetY.get() >= travelPx() - 1) safeToRemove();
     else glideSheet(travelPx(), 0, safeToRemove);
   }, [present]);
+
+  useEffect(() => {
+    const priorFocus = document.activeElement as HTMLElement | null;
+    const timer = setTimeout(() => {
+      const closeBtn = sheet.current?.querySelector<HTMLElement>('button[aria-label="Close Now Playing"]');
+      if (closeBtn) {
+        closeBtn.focus();
+      } else {
+        sheet.current?.focus();
+      }
+    }, 16);
+
+    return () => {
+      clearTimeout(timer);
+      priorFocus?.focus?.();
+    };
+  }, []);
+
+  const closeRef = useRef(drag.close);
+  closeRef.current = drag.close;
+
+  useEffect(() => {
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        closeRef.current();
+        return;
+      }
+      if (event.key === "Tab") {
+        const container = sheet.current;
+        if (!container) return;
+        const focusable = Array.from(
+          container.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          ),
+        );
+        if (focusable.length === 0) {
+          event.preventDefault();
+          container.focus();
+          return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const current = document.activeElement;
+        if (event.shiftKey && (current === first || !container.contains(current))) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && current === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
+  }, []);
   const pull = useRef(new VelocityTracker());
   const sheetHandlers = {
     ...drag.handlers,
@@ -625,6 +681,7 @@ function NowPlayingSheet() {
       role="dialog"
       aria-modal="true"
       aria-label="Now playing"
+      tabIndex={-1}
       initial={reduced ? { opacity: 0 } : false}
       animate={{ opacity: 1 }}
       exit={reduced ? { opacity: 0 } : undefined}

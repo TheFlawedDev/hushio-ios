@@ -238,16 +238,43 @@ export function ReplayStories({ load, period, label, onPeriod, onRetry, onShare,
           </div>
           <div className="flex items-center justify-between px-4 pt-2">
             <p className="text-body font-semibold text-white/85">Replay</p>
-            <button
-              type="button"
-              aria-label="Close Replay"
-              onPointerDown={stopPointer}
-              onClick={onClose}
-              className="grid size-11 place-items-center rounded-full text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-            >
-              <PhoneIcon icon={X} />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                aria-label="Previous slide"
+                disabled={at === 0}
+                onPointerDown={stopPointer}
+                onClick={goBack}
+                className="sr-only focus:not-sr-only focus:relative focus:z-20 focus:rounded-full focus:bg-white/20 focus:px-3 focus:py-1 focus:text-meta focus:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              >
+                Previous slide
+              </button>
+              <button
+                type="button"
+                aria-label="Next slide"
+                disabled={count === 0}
+                onPointerDown={stopPointer}
+                onClick={goForward}
+                className="sr-only focus:not-sr-only focus:relative focus:z-20 focus:rounded-full focus:bg-white/20 focus:px-3 focus:py-1 focus:text-meta focus:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              >
+                Next slide
+              </button>
+              <button
+                type="button"
+                aria-label="Close Replay"
+                onPointerDown={stopPointer}
+                onClick={onClose}
+                className="grid size-11 place-items-center rounded-full text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              >
+                <PhoneIcon icon={X} />
+              </button>
+            </div>
           </div>
+          {count > 0 && at < count && (
+            <span className="sr-only" aria-live="polite" aria-atomic="true">
+              {`Slide ${at + 1} of ${count}: ${slideTitle(slides[at])}`}
+            </span>
+          )}
           <div className="relative flex min-h-0 flex-1 flex-col">{body}</div>
         </div>
       </motion.div>

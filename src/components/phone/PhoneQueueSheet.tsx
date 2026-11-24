@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import { motion } from "motion/react";
-import { DotsSixVertical, Radio, Repeat, RepeatOnce, Shuffle, Trash, type Icon as PhosphorIcon } from "@phosphor-icons/react";
+import { CaretDown, CaretUp, DotsSixVertical, Radio, Repeat, RepeatOnce, Shuffle, Trash, type Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { PHONE_ROW_DP, PhoneTrackRow } from "./PhoneTrackRow";
 import { PhoneIcon } from "./PhoneIcon";
 import { VirtualList, scrollerOf } from "../VirtualList";
@@ -165,9 +165,38 @@ export function PhoneQueueList() {
     applyDrag();
   };
 
-  const menuFor = (track: Track, event: { currentTarget: EventTarget & Element }) => {
+  const menuFor = (track: Track, event: { currentTarget: EventTarget & Element }, at?: number) => {
     const rect = event.currentTarget.getBoundingClientRect();
-    openContextMenu(rect.left, rect.top, trackMenuItems(songOf(track)));
+    const items = trackMenuItems(songOf(track));
+    if (at !== undefined) {
+      if (at > index + 1) {
+        items.push({
+          label: "Move up",
+          icon: CaretUp,
+          onSelect: () => {
+            moveUpcoming(at, at - 1);
+            haptic("tick");
+          },
+        });
+      }
+      if (at < autoplayStart - 1) {
+        items.push({
+          label: "Move down",
+          icon: CaretDown,
+          onSelect: () => {
+            moveUpcoming(at, at + 1);
+            haptic("tick");
+          },
+        });
+      }
+      items.push({
+        label: "Remove from queue",
+        icon: Trash,
+        danger: true,
+        onSelect: () => removeUpcoming(at, track),
+      });
+    }
+    openContextMenu(rect.left, rect.top, items);
   };
 
   const beginDrag = (at: number, event: PointerEvent<HTMLButtonElement>) => {
@@ -268,17 +297,66 @@ export function PhoneQueueList() {
               dragging={drag?.from === at}
               dragOffset={drag ? (drag.from === at ? drag.travel : slideOffset(at, drag.from, drag.target, PHONE_ROW_DP)) : 0}
               onPress={() => jumpTo(at)}
-              onMore={(event) => menuFor(track, event)}
+              onMore={(event) => menuFor(track, event, at)}
               swipeLeft={{ label: "Remove", icon: Trash, tone: "danger", run: () => removeUpcoming(at, track) }}
               handle={
-                <button
-                  type="button"
-                  aria-label={`Drag ${track.title} to reorder`}
-                  onPointerDown={(event) => beginDrag(at, event)}
-                  className="grid h-12 w-10 shrink-0 cursor-grab touch-none place-items-center rounded-full text-ink-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-                >
-                  <PhoneIcon icon={DotsSixVertical} />
-                </button>
+                <div className="flex items-center">
+                  <button
+                    type="button"
+                    aria-label={`Move ${track.title} up`}
+                    disabled={at <= index + 1}
+                    onClick={() => {
+                      if (at > index + 1) {
+                        moveUpcoming(at, at - 1);
+                        haptic("tick");
+                      }
+                    }}
+                    className="sr-only focus:not-sr-only focus:relative focus:z-10 focus:rounded focus:px-1 focus:text-caption focus:text-ink-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                  >
+                    Move up
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Move ${track.title} down`}
+                    disabled={at >= autoplayStart - 1}
+                    onClick={() => {
+                      if (at < autoplayStart - 1) {
+                        moveUpcoming(at, at + 1);
+                        haptic("tick");
+                      }
+                    }}
+                    className="sr-only focus:not-sr-only focus:relative focus:z-10 focus:rounded focus:px-1 focus:text-caption focus:text-ink-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                  >
+                    Move down
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Remove ${track.title} from queue`}
+                    onClick={() => removeUpcoming(at, track)}
+                    className="sr-only focus:not-sr-only focus:relative focus:z-10 focus:rounded focus:px-1 focus:text-caption focus:text-ink-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                  >
+                    Remove from queue
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Drag ${track.title} to reorder`}
+                    onPointerDown={(event) => beginDrag(at, event)}
+                    onKeyDown={(event) => {
+                      if (event.key === "ArrowUp" && at > index + 1) {
+                        event.preventDefault();
+                        moveUpcoming(at, at - 1);
+                        haptic("tick");
+                      } else if (event.key === "ArrowDown" && at < autoplayStart - 1) {
+                        event.preventDefault();
+                        moveUpcoming(at, at + 1);
+                        haptic("tick");
+                      }
+                    }}
+                    className="grid h-12 w-10 shrink-0 cursor-grab touch-none place-items-center rounded-full text-ink-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                  >
+                    <PhoneIcon icon={DotsSixVertical} />
+                  </button>
+                </div>
               }
             />
           )}
@@ -298,7 +376,7 @@ export function PhoneQueueList() {
                 track={track}
                 index={at}
                 onPress={() => jumpTo(at)}
-                onMore={(event) => menuFor(track, event)}
+                onMore={(event) => menuFor(track, event, at)}
                 swipeLeft={{ label: "Remove", icon: Trash, tone: "danger", run: () => removeUpcoming(at, track) }}
               />
             )}

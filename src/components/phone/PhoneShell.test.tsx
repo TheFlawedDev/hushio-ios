@@ -161,4 +161,25 @@ describe("PhoneShell", () => {
     expect(document.querySelector("[data-page-shade]")).toBeNull();
     expect(dock().isConnected && page.contains(dock())).toBe(true);
   });
+
+  it("hides background content with aria-hidden and inert when Now Playing is open", () => {
+    usePlayer.setState({ queue: [track(1)], index: 0 });
+    useUI.setState({ nowPlayingOpen: false });
+    const { container, rerender } = render(<PhoneShell />);
+    const main = container.querySelector("main");
+    const dockContainer = dock();
+    expect(main?.getAttribute("aria-hidden")).toBeNull();
+    expect(main?.hasAttribute("inert")).toBe(false);
+    expect(dockContainer.getAttribute("aria-hidden")).toBeNull();
+    expect(dockContainer.hasAttribute("inert")).toBe(false);
+
+    act(() => {
+      useUI.setState({ nowPlayingOpen: true });
+    });
+    rerender(<PhoneShell />);
+    expect(main?.getAttribute("aria-hidden")).toBe("true");
+    expect(main?.hasAttribute("inert")).toBe(true);
+    expect(dockContainer.getAttribute("aria-hidden")).toBe("true");
+    expect(dockContainer.hasAttribute("inert")).toBe(true);
+  });
 });

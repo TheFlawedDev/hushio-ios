@@ -6,7 +6,7 @@ const { haptic } = vi.hoisted(() => ({ haptic: vi.fn() }));
 
 vi.mock("../../lib/haptics", () => ({ haptic }));
 
-import { PhoneCollage, PhoneLibraryTile } from "./PhoneLibraryRows";
+import { PhoneCollage, PhoneLibraryRow, PhoneLibraryTile } from "./PhoneLibraryRows";
 import { LONG_HOLD_MS } from "../../lib/phoneGestures";
 
 if (!("PointerEvent" in window)) {
@@ -43,7 +43,7 @@ describe("PhoneLibraryTile long press", () => {
     const onOpen = vi.fn();
     const onLongPress = vi.fn();
     render(<PhoneLibraryTile title="Liked" subtitle="3 songs" covers={[]} fallback={Books} onOpen={onOpen} onLongPress={onLongPress} />);
-    const tile = screen.getByRole("button", { name: "Liked" });
+    const tile = screen.getByRole("button", { name: "Liked 3 songs" });
 
     fireEvent(tile, createEvent.pointerDown(tile, { clientX: 8, clientY: 9 }));
     act(() => {
@@ -64,5 +64,34 @@ describe("library tiles without art", () => {
     const art = container.querySelector("[aria-hidden=true].grid");
     expect(art?.className).toContain("bg-wash");
     expect(art?.className).not.toContain("bg-accent");
+  });
+});
+
+describe("PhoneLibraryRows accessible names", () => {
+  it("composes accessible name with title, pinned metadata, and subtitle for PhoneLibraryTile", () => {
+    render(
+      <PhoneLibraryTile
+        title="Favorites"
+        subtitle="12 songs"
+        pinned={true}
+        covers={[]}
+        fallback={Books}
+        onOpen={() => {}}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Favorites Pinned, 12 songs" })).toBeTruthy();
+  });
+
+  it("composes accessible name with title, pinned metadata, and subtitle for PhoneLibraryRow", () => {
+    render(
+      <PhoneLibraryRow
+        title="Favorites"
+        subtitle="12 songs"
+        pinned={true}
+        art={<span aria-hidden="true" />}
+        onOpen={() => {}}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Favorites Pinned, 12 songs" })).toBeTruthy();
   });
 });
