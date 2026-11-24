@@ -25,6 +25,7 @@
 | `BASELINE_VERIFICATION.md` | Exact baseline checks and evidence scope |
 | `BLOCKERS.md` | User/toolchain/platform/source blockers, never counted as parity |
 | `PROGRESS.md` | Current execution record |
+| `REMAINING_SEQUENCE.md` | Chronological order for the remaining work and the critical path |
 
 ## Verification so far
 

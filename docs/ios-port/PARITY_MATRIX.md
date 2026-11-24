@@ -52,7 +52,7 @@ actually built and actually run.
 | Feature | Status | Evidence |
 |---|---|---|
 | Keychain secrets (`secure_get/set/clear`) | **V-SIM** | Reached through the single registered plugin: no `keyring unavailable` and no `services are not ready` in the device log while the app renders live data |
-| Notification permission — real state | **SRC** | Replaced the fabricated `granted` stub with real `UNAuthorizationStatus`; not yet exercised (needs a tap) |
+| Notification permission — real state | **SRC** | Swift maps a real `UNAuthorizationStatus`; the Rust facade now routes `notification_state/request/settings` to that bridge on iOS (previous `granted` stub removed for iOS). Not yet exercised — needs a tap |
 | Document picker / tree scan / sidecar LRC | **SRC** | `HushioAudioPlugin` → `DocumentPickerController`; security-scoped bookmarks; needs a tap |
 | Download publish (export) | **SRC** | Mapped to document export; **no MediaStore, no PHPhotoLibrary audio publishing** |
 | OAuth via `ASWebAuthenticationSession` | **BLOCK** | Flow + URL scheme registered in Info.plist, but `HUSHIO_GOOGLE_CLIENT_ID` / `HUSHIO_SPOTIFY_CLIENT_ID` are not configured — documented configuration blocker, not a code gap |

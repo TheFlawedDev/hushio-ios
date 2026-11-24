@@ -186,6 +186,10 @@ mod bridge {
 
     use crate::tree_library::TreeItem;
 
+    // Notification reply shape declared at the module root; bring it into scope for the
+    // `notification_*` wrappers below.
+    use super::NotificationReply;
+
     static APP: OnceLock<AppHandle<Wry>> = OnceLock::new();
     const NOT_READY: &str = "iOS services are not ready yet.";
 
@@ -386,6 +390,26 @@ mod bridge {
         Ok(reply.url)
     }
 
+    /// Notification permission state from the Swift `notification_state` selector, which
+    /// maps a real `UNAuthorizationStatus` (notDetermined/denied/authorized/provisional/
+    /// ephemeral). Never synthesises `granted`: a bridge failure is returned as an error.
+    pub fn notification_state() -> Result<String, String> {
+        call_bounded::<NotificationReply>("notification_state", json!({}))
+            .map(|reply| reply.state)
+    }
+
+    /// Re-reads the real OS decision after any first-time authorization prompt.
+    pub async fn notification_request() -> Result<String, String> {
+        call_async_bounded::<NotificationReply>("notification_request", json!({}))
+            .await
+            .map(|reply| reply.state)
+    }
+
+    /// Opens this app's notification settings; the Swift side rejects when it cannot.
+    pub fn notification_settings() -> Result<(), String> {
+        call_bounded::<Value>("notification_settings", json!({})).map(drop)
+    }
+
     pub async fn update(command: &str, _payload: Value) -> Result<Value, String> {
         // In-app APK self-update is Android-only. iOS distribution is Xcode development
         // signing / TestFlight / App Store, so there is no update bridge to call.
@@ -508,17 +532,36 @@ pub fn notification_settings() -> Result<(), String> {
         .map(drop)
 }
 
-#[cfg(not(target_os = "android"))]
+#[cfg(target_os = "ios")]
+pub fn notification_state() -> Result<String, String> {
+    bridge::notification_state()
+}
+
+#[cfg(target_os = "ios")]
+pub async fn notification_request() -> Result<String, String> {
+    bridge::notification_request().await
+}
+
+#[cfg(target_os = "ios")]
+pub fn notification_settings() -> Result<(), String> {
+    bridge::notification_settings()
+}
+
+// Desktop platforms have no notification bridge in this app (the Android and iOS
+// implementations live in their own modules). This pre-existing stub is unchanged by the
+// iOS port and is NOT a claim that desktop notification permissions work; it is recorded
+// in BLOCKERS.md as a desktop-scope question rather than silently treated as parity.
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
 pub fn notification_state() -> Result<String, String> {
     Ok("granted".to_owned())
 }
 
-#[cfg(not(target_os = "android"))]
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
 pub async fn notification_request() -> Result<String, String> {
     Ok("granted".to_owned())
 }
 
-#[cfg(not(target_os = "android"))]
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
 pub fn notification_settings() -> Result<(), String> {
     Ok(())
 }
