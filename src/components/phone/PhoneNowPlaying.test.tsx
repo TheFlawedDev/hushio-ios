@@ -97,7 +97,7 @@ describe("PhoneNowPlaying", () => {
       "Previous",
       "Play",
       "Next",
-      "Enable repeat",
+      "Repeat all",
       "Like",
       "Download",
       "Lyrics",
@@ -399,5 +399,44 @@ describe("phone seeking safeguards", () => {
     expect(document.activeElement).toBe(last);
     fireEvent.keyDown(window, { key: "Tab", shiftKey: false });
     expect(document.activeElement).toBe(first);
+  });
+
+  it("cycles repeat button accessible names matching the next action", () => {
+    usePlayer.setState({ repeat: "off" });
+    const { rerender } = render(<PhoneNowPlaying />);
+    const repeatOff = screen.getByRole("button", { name: "Repeat all" });
+    expect(repeatOff).toBeTruthy();
+    expect(repeatOff.getAttribute("aria-pressed")).toBe("false");
+
+    usePlayer.setState({ repeat: "all" });
+    rerender(<PhoneNowPlaying />);
+    const repeatAll = screen.getByRole("button", { name: "Repeat one" });
+    expect(repeatAll).toBeTruthy();
+    expect(repeatAll.getAttribute("aria-pressed")).toBe("true");
+
+    usePlayer.setState({ repeat: "one" });
+    rerender(<PhoneNowPlaying />);
+    const repeatOne = screen.getByRole("button", { name: "Repeat off" });
+    expect(repeatOne).toBeTruthy();
+    expect(repeatOne.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("exposes popup and expanded semantics for More options and Queue buttons", () => {
+    render(<PhoneNowPlaying />);
+    const moreBtn = screen.getByRole("button", { name: "More options" });
+    expect(moreBtn.getAttribute("aria-haspopup")).toBe("menu");
+    expect(moreBtn.getAttribute("aria-expanded")).toBe("false");
+
+    fireEvent.click(moreBtn);
+    expect(useUI.getState().contextMenu).not.toBeNull();
+    expect(moreBtn.getAttribute("aria-expanded")).toBe("true");
+
+    const queueBtn = screen.getByRole("button", { name: "Queue" });
+    expect(queueBtn.getAttribute("aria-haspopup")).toBe("dialog");
+    expect(queueBtn.getAttribute("aria-expanded")).toBe("false");
+
+    fireEvent.click(queueBtn);
+    expect(useUI.getState().phoneQueueOpen).toBe(true);
+    expect(queueBtn.getAttribute("aria-expanded")).toBe("true");
   });
 });

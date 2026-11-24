@@ -166,6 +166,9 @@ describe("SyncedLyrics", () => {
     expect(buttons[2].className).toContain("text-ink-2");
     expect(buttons[3].className).toContain("text-ink-2");
     expect(buttons[2].style.filter).toBe("");
+    expect(buttons[1].getAttribute("aria-current")).toBe("true");
+    expect(buttons[0].getAttribute("aria-current")).toBeNull();
+    expect(buttons[1].getAttribute("title")).toBeNull();
   });
 
   it("keeps every line at full opacity and steps the ink by distance", () => {

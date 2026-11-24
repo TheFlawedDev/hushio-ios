@@ -63,9 +63,9 @@ type ControlSize = 44 | 48 | 56;
 const SIZE: Record<ControlSize, string> = { 44: "h-11 w-11", 48: "h-12 w-12", 56: "h-14 w-14" };
 
 const REPEAT_LABEL: Record<RepeatMode, string> = {
-  off: "Enable repeat",
-  all: "Disable repeat",
-  one: "Disable repeat one",
+  off: "Repeat all",
+  all: "Repeat one",
+  one: "Repeat off",
 };
 
 function toneFor(onArt: boolean, active: boolean, strong: boolean): string {
@@ -91,6 +91,8 @@ type ControlProps = {
   badge?: string;
   custom?: ReactNode;
   filled?: boolean;
+  hasPopup?: boolean | "menu" | "dialog" | "listbox" | "tree" | "grid";
+  expanded?: boolean;
 };
 
 function Control({
@@ -110,6 +112,8 @@ function Control({
   badge,
   custom,
   filled = false,
+  hasPopup,
+  expanded,
 }: ControlProps) {
   const reduced = reducedMotion();
   const loop = useLoopAllowed();
@@ -120,6 +124,8 @@ function Control({
       aria-label={label}
       title={label}
       aria-pressed={pressed}
+      aria-haspopup={hasPopup}
+      aria-expanded={expanded}
       disabled={disabled}
       onClick={onClick}
       whileTap={disabled ? undefined : pressTap(reduced)}
@@ -203,6 +209,8 @@ function Marquee({ text, className, delayS }: { text: string; className: string;
     </span>
   );
 }
+
+const MORE_OWNER = "phone-now-playing-more";
 
 function DownloadButton({ track }: { track: Track | null }) {
   const item = useLibrary((state) => (track ? state.downloads[track.id] : undefined));
@@ -664,6 +672,7 @@ function NowPlayingSheet() {
   const likeTone = onArt ? (liked ? "!text-art" : "!text-art/[0.72]") : "";
   const playTone = onArt ? "bg-art text-base" : "bg-primary text-on-primary";
   const sourceName = nowPlayingSourceName(playingFrom, track?.album ?? undefined, (id) => playlists.find((item) => item.id === id)?.name);
+  const moreOpen = useUI((state) => state.contextMenu?.owner === MORE_OWNER);
 
   const changeTrack = (change: "next" | "prev") => {
     if (change === "next") next(true);
@@ -672,7 +681,7 @@ function NowPlayingSheet() {
 
   const openMenu = (event: MouseEvent<HTMLButtonElement>, items: MenuItem[]) => {
     const rect = event.currentTarget.getBoundingClientRect();
-    openContextMenu(rect.left, rect.top, items, { above: true });
+    openContextMenu(rect.left, rect.top, items, { above: true, owner: MORE_OWNER });
   };
 
   return (
@@ -707,8 +716,14 @@ function NowPlayingSheet() {
                   size={44}
                   active
                   disabled={empty}
+                  hasPopup="menu"
+                  expanded={moreOpen}
                   onClick={(event) => {
-                    if (track) openMenu(event, trackMenuItems(songOf(track)));
+                    if (moreOpen) {
+                      useUI.getState().closeContextMenu();
+                    } else if (track) {
+                      openMenu(event, trackMenuItems(songOf(track)));
+                    }
                   }}
                 />
               </header>
@@ -843,7 +858,15 @@ function NowPlayingSheet() {
               <div className={`mt-4 flex items-center justify-between pb-2 ${ROW}`}>
                 <Control label="Cast" icon={Screencast} size={48} strong disabled={empty} onClick={() => void castFromNowPlaying()} />
                 <LyricsHint visible={hintVisible} onOpen={() => openPanelKind("lyrics")} />
-                <Control label="Queue" icon={Queue} size={48} strong onClick={() => openPanelKind("queue")} />
+                <Control
+                  label="Queue"
+                  icon={Queue}
+                  size={48}
+                  strong
+                  hasPopup="dialog"
+                  expanded={queueOpen}
+                  onClick={() => openPanelKind("queue")}
+                />
               </div>
 
             </motion.div>

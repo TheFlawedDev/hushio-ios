@@ -406,7 +406,7 @@ export function SyncedLyrics({ lyrics, loading, offset = 0, trackKey, onArt = fa
         ref={active ? activeRef : undefined}
         type="button"
         data-line
-        title="Jump here"
+        aria-current={active ? "true" : undefined}
         onClick={() => {
           if (dragged.current || performance.now() - manualAt.current < MANUAL_SCROLL_GUARD_MS) return;
           endBrowsing();

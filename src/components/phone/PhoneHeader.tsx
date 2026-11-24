@@ -131,7 +131,7 @@ export function PhoneHeader({
     >
       {onBack && <PhoneBackRow onBack={onBack} label={backLabel} />}
       {artwork && onEdit ? (
-        <button type="button" aria-label="Edit details" onClick={onEdit} className={`${topGap}size-52 shrink-0 rounded-[12px] [corner-shape:squircle]`}>
+        <button type="button" aria-label={`Edit playlist ${title}`} onClick={onEdit} className={`${topGap}size-52 shrink-0 rounded-[12px] [corner-shape:squircle]`}>
           <img loading="lazy" decoding="async" src={artwork} alt="" onLoad={art.onLoad} className={`size-full rounded-[12px] [corner-shape:squircle] object-cover ${art.className}`} />
         </button>
       ) : artwork ? (
@@ -150,13 +150,7 @@ export function PhoneHeader({
         title={titleTooltip}
         className={`mt-4 line-clamp-2 max-w-full break-words font-title text-section font-semibold leading-7 tracking-[-0.02em] ${tone}`}
       >
-        {onEdit ? (
-          <button type="button" onClick={onEdit} className="max-w-full text-center">
-            {title}
-          </button>
-        ) : (
-          title
-        )}
+        {title}
       </h1>
       {description && <p className={`mt-1.5 line-clamp-3 max-w-full break-words text-meta leading-[18px] ${dim}`}>{description}</p>}
       {meta && <div className={`mt-1 text-meta leading-[18px] tabular-nums ${dim}`}>{meta}</div>}

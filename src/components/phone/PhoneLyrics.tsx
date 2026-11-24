@@ -66,7 +66,6 @@ export function PhoneLyrics() {
                 type="button"
                 aria-label="Translate lyrics"
                 aria-pressed={translate}
-                title="Translate lyrics"
                 onClick={() => setTranslate((on) => !on)}
                 className={iconClass}
               >

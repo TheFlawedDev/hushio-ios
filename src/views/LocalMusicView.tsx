@@ -133,8 +133,9 @@ function LocalTrackRow({ track, onPlay, onRemove }: { track: LocalTrack; onPlay:
           <span className={`flex min-w-0 items-center gap-1.5 text-body text-ink-1 ${phone ? "leading-[22px]" : ""}`}>
             <span className="truncate">{track.title}</span>
             {downloaded && (
-              <span className="shrink-0 text-accent" title="Downloaded">
+              <span className="shrink-0 text-accent" role="img" aria-label="Downloaded" title="Downloaded">
                 <Icon icon={DownloadSimple} size={16} fill="fill" />
+                <span className="sr-only">, downloaded</span>
               </span>
             )}
           </span>

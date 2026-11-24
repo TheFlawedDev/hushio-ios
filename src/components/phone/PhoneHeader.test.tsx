@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { PhoneHeader } from "./PhoneHeader";
 
@@ -28,5 +28,15 @@ describe("PhoneHeader", () => {
   it("leaves the status strip on its default colour without a band", () => {
     render(<PhoneHeader title="Mix" artwork="https://example.test/cover.jpg" />);
     expect(document.documentElement.style.getPropertyValue("--phone-status-bg")).toBe("");
+  });
+
+  it("names the playlist in the artwork edit button and avoids redundant nested buttons in h1", () => {
+    const onEdit = vi.fn();
+    render(<PhoneHeader title="Road Trip" artwork="https://example.test/cover.jpg" onEdit={onEdit} />);
+    const editBtn = screen.getByRole("button", { name: "Edit playlist Road Trip" });
+    expect(editBtn).toBeTruthy();
+
+    const heading = screen.getByRole("heading", { name: "Road Trip" });
+    expect(heading.querySelector("button")).toBeNull();
   });
 });

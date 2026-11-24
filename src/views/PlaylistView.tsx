@@ -188,7 +188,6 @@ export function PlaylistView() {
             <button
               type="button"
               aria-label="Shuffle"
-              title="Shuffle"
               disabled={empty}
               onClick={() => playCollection(tracks, playlist.id, true)}
               className={PHONE_SHUFFLE}
