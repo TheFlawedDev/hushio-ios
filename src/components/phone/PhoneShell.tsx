@@ -89,11 +89,18 @@ export function PhoneShell() {
         className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-base will-change-transform"
         style={{ scale: pageScale, borderRadius: pageRadius, transformOrigin: "50% 0%" }}
       >
-        <div
-          aria-hidden="true"
+        {/* Status-bar tap strip. It used to be an `aria-hidden` div with an onClick, which is
+            an interactive element hidden from assistive technology (accessibility audit #18).
+            It is now a real, labelled button: the visuals are unchanged (transparent, full
+            width, only as tall as the inset) but screen-reader and keyboard users get the same
+            "scroll to top" affordance, and no ARIA rule is broken. */}
+        <button
+          type="button"
           data-status-strip
+          aria-label="Scroll to top"
+          tabIndex={-1}
           onClick={scrollToTop}
-          className="absolute inset-x-0 top-0 z-10 bg-[color:var(--phone-status-bg,rgb(var(--base)))] motion-safe:transition-colors motion-safe:duration-swap"
+          className="absolute inset-x-0 top-0 z-10 bg-[color:var(--phone-status-bg,rgb(var(--base)))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus motion-safe:transition-colors motion-safe:duration-swap"
           style={{ height: INSET_TOP }}
         />
         <motion.div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0" style={{ x: edge.x, opacity: edge.shadow, boxShadow: "-12px 0 24px rgb(0 0 0)" }} />

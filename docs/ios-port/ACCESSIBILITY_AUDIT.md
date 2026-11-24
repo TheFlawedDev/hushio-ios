@@ -383,6 +383,7 @@ The iPhone shell features high baseline design preservation, progressive gesture
 - **Defect**: Track rows, the mini player, and the bottom tab bar hard-code fixed DP heights and single-line ellipsis truncations. When users configure iOS Accessibility Text Sizes (AX1–AX5), text cannot wrap and is severely clipped.
 - **iOS Impact**: Visually impaired users relying on large Dynamic Type experience severe truncation of titles and navigation labels.
 - **Fix Suggestion**: Change fixed heights to `min-h-[...]`, allow multi-line text wrapping at larger Dynamic Type scales, and adapt `VirtualList` row measurement dynamically.
+- **Status**: **Deferred by design, not skipped.** These DP constants are load-bearing for virtualised row measurement, gesture hit-slots and the dock layout; converting them to intrinsic heights changes layout for every platform and must be validated against the design spec on a real device at AX1–AX5. Tracked in `DEVICE_VERIFICATION.md` (§5) and left as the one open P3.
 
 #### 18. Status bar scroll-to-top overlay combines `aria-hidden="true"` with interactive click
 - **File & Line**: `src/components/phone/PhoneShell.tsx:92-98`
@@ -400,6 +401,7 @@ The iPhone shell features high baseline design preservation, progressive gesture
 - **Defect**: Interactive element with an `onClick` listener is marked `aria-hidden="true"` without role or keyboard accessibility.
 - **iOS Impact**: Triggers HTML/ARIA validator failures (interactive element hidden from assistive technology).
 - **Fix Suggestion**: Make the strip non-interactive in HTML and rely on native WKWebView status bar tap detection, or provide a semantic, non-hidden back-to-top button.
+- **Status**: Implemented — the strip is now a real `<button aria-label="Scroll to top">` with unchanged visuals (transparent, inset height) and no `aria-hidden`; a test asserts it is reachable by role and name.
 
 #### 19. Local music downloaded badge is invisible to screen readers
 - **File & Line**: `src/views/LocalMusicView.tsx:135-139`

@@ -76,6 +76,17 @@ Expected: a signed `.ipa`/`.app` installable on the device. If it stops at
 - [ ] Stream proxy: remote HTTPS audio with per-stream headers and byte ranges
       (seek in a long track exercises `HushioResourceLoader`).
 
+## 7. Dynamic Type / accessibility text sizes (closes audit #17)
+
+- [ ] Set Settings → Accessibility → Display & Text Size → Larger Text to AX1, AX3 and AX5.
+- [ ] Track rows, mini player, tab bar and the featured shelf: titles must not be clipped to
+      the point of losing meaning, and the dock must not overlap content.
+- [ ] `VirtualList` rows keep their measurement correct (no overlap / no blank gaps) once text
+      grows; note where a fixed DP height still wins, because those constants are load-bearing
+      for row measurement and must be changed with the design owner, not in a sweep.
+- [ ] VoiceOver rotor: confirm headings, buttons and the new "Scroll to top" affordance are
+      reachable in a sensible order.
+
 ## Reporting
 
 For each item, append a row to `PARITY_MATRIX.md` with status `V-DEV`, the build/commit SHA,

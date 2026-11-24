@@ -92,6 +92,13 @@ describe("PhoneShell", () => {
     await waitFor(() => expect(screen.queryByText("Screen home")).toBeNull());
   });
 
+  it("exposes the status strip as a labelled button, not an aria-hidden click target", () => {
+    render(<PhoneShell />);
+    const strip = screen.getByRole("button", { name: "Scroll to top" });
+    expect(strip.hasAttribute("aria-hidden")).toBe(false);
+    expect(strip.getAttribute("data-status-strip")).not.toBeNull();
+  });
+
   it("scrolls the view to the top when the status strip is tapped", () => {
     render(<PhoneShell />);
     const scroller = document.getElementById("view-scroll") as HTMLElement;
