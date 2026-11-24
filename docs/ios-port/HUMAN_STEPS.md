@@ -21,7 +21,8 @@ so in the commit message. Never simulate the missing input.
 | Signing flags | `tauri ios build` already passes `-allowProvisioningUpdates`; nothing extra to type |
 | Signing certificate | **created** — an `Apple Development` identity is present in the keychain (check with `security find-identity -v -p codesigning`) |
 | Apple ID session | authenticated (the certificate proves the portal call succeeded) |
-| Device | the paired iPhone is visible to `devicectl` but **Xcode reports `available: false`** (no USB, not reachable over the network) and it is **not registered to the team** |
+| Device | the iPhone is paired (`devicectl manage pair --device <name>`) and Xcode lists it as usable, but **Developer Mode is Off**, so device builds are refused; the device is also not yet registered to the team |
+| Pairing | `xcrun devicectl manage pair --device <name>` pairs it; no cable re-plug needed once paired over USB |
 
 That combination produces exactly this, and nothing else:
 

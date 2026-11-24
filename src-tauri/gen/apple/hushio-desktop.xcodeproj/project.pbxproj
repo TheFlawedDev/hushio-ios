@@ -23,86 +23,86 @@
 
 /* Begin PBXFileReference section */
 		05EAC185F41B387DF82CA6EB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		091BA7D18FC32B7450A86354 /* lastfm.rs */ = {isa = PBXFileReference; path = lastfm.rs; sourceTree = "<group>"; };
-		0D6E5D0A9FCA0540BCA75D66 /* sync_queue.rs */ = {isa = PBXFileReference; path = sync_queue.rs; sourceTree = "<group>"; };
-		117E7C2458CBE8A5EC6CC1A7 /* extra.rs */ = {isa = PBXFileReference; path = extra.rs; sourceTree = "<group>"; };
-		16C63D995B4A51814A23EC72 /* scrobble.rs */ = {isa = PBXFileReference; path = scrobble.rs; sourceTree = "<group>"; };
-		18EBA826AA4FFE0A3472CAB3 /* linux_session.rs */ = {isa = PBXFileReference; path = linux_session.rs; sourceTree = "<group>"; };
-		1A4080D3CFC1DD93F35662CA /* tests.rs */ = {isa = PBXFileReference; path = tests.rs; sourceTree = "<group>"; };
-		1CDD2F0BE4E3B1C95C44E10B /* tree_library.rs */ = {isa = PBXFileReference; path = tree_library.rs; sourceTree = "<group>"; };
+		091BA7D18FC32B7450A86354 /* lastfm.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = lastfm.rs; sourceTree = "<group>"; };
+		0D6E5D0A9FCA0540BCA75D66 /* sync_queue.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = sync_queue.rs; sourceTree = "<group>"; };
+		117E7C2458CBE8A5EC6CC1A7 /* extra.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = extra.rs; sourceTree = "<group>"; };
+		16C63D995B4A51814A23EC72 /* scrobble.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = scrobble.rs; sourceTree = "<group>"; };
+		18EBA826AA4FFE0A3472CAB3 /* linux_session.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = linux_session.rs; sourceTree = "<group>"; };
+		1A4080D3CFC1DD93F35662CA /* tests.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = tests.rs; sourceTree = "<group>"; };
+		1CDD2F0BE4E3B1C95C44E10B /* tree_library.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = tree_library.rs; sourceTree = "<group>"; };
 		1E12B81C4ACD073D995D5820 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
-		22AEC42E32C69AB53F92593B /* reveal.rs */ = {isa = PBXFileReference; path = reveal.rs; sourceTree = "<group>"; };
+		22AEC42E32C69AB53F92593B /* reveal.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = reveal.rs; sourceTree = "<group>"; };
 		22CC63C6A7FB7A6950912C72 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
-		2A430951389DC055B5C34627 /* media_controls.rs */ = {isa = PBXFileReference; path = media_controls.rs; sourceTree = "<group>"; };
-		32A674DECDA58C21302EEC14 /* lib.rs */ = {isa = PBXFileReference; path = lib.rs; sourceTree = "<group>"; };
-		42D5793A9FA12944FEFFE7E1 /* han.rs */ = {isa = PBXFileReference; path = han.rs; sourceTree = "<group>"; };
-		43910497824070E0496D526D /* providers.rs */ = {isa = PBXFileReference; path = providers.rs; sourceTree = "<group>"; };
-		4425415683DAF783398EE526 /* playlist_cover.rs */ = {isa = PBXFileReference; path = playlist_cover.rs; sourceTree = "<group>"; };
-		443CA9636053D016116438B1 /* crash.rs */ = {isa = PBXFileReference; path = crash.rs; sourceTree = "<group>"; };
-		4978ADE4DB5F56B6CF46C6EC /* cache.rs */ = {isa = PBXFileReference; path = cache.rs; sourceTree = "<group>"; };
+		2A430951389DC055B5C34627 /* media_controls.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = media_controls.rs; sourceTree = "<group>"; };
+		32A674DECDA58C21302EEC14 /* lib.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = lib.rs; sourceTree = "<group>"; };
+		42D5793A9FA12944FEFFE7E1 /* han.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = han.rs; sourceTree = "<group>"; };
+		43910497824070E0496D526D /* providers.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = providers.rs; sourceTree = "<group>"; };
+		4425415683DAF783398EE526 /* playlist_cover.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = playlist_cover.rs; sourceTree = "<group>"; };
+		443CA9636053D016116438B1 /* crash.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = crash.rs; sourceTree = "<group>"; };
+		4978ADE4DB5F56B6CF46C6EC /* cache.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = cache.rs; sourceTree = "<group>"; };
 		4AE0B0928234144212EAD34A /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
-		4D34CE2376C534364FADD006 /* parse.rs */ = {isa = PBXFileReference; path = parse.rs; sourceTree = "<group>"; };
-		4E0EC9996422FA27447CAAB0 /* sync_merge.rs */ = {isa = PBXFileReference; path = sync_merge.rs; sourceTree = "<group>"; };
-		4F02FDB96EC81FEBFB1DEBD4 /* smb.rs */ = {isa = PBXFileReference; path = smb.rs; sourceTree = "<group>"; };
-		52CDE419546EC594D855255F /* yt_innertube_auth.rs */ = {isa = PBXFileReference; path = yt_innertube_auth.rs; sourceTree = "<group>"; };
+		4D34CE2376C534364FADD006 /* parse.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = parse.rs; sourceTree = "<group>"; };
+		4E0EC9996422FA27447CAAB0 /* sync_merge.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = sync_merge.rs; sourceTree = "<group>"; };
+		4F02FDB96EC81FEBFB1DEBD4 /* smb.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = smb.rs; sourceTree = "<group>"; };
+		52CDE419546EC594D855255F /* yt_innertube_auth.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = yt_innertube_auth.rs; sourceTree = "<group>"; };
 		52DA74A555D1747EA3A92FE9 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = assets; sourceTree = SOURCE_ROOT; };
-		549F1843C6814E011A19E026 /* tests.rs */ = {isa = PBXFileReference; path = tests.rs; sourceTree = "<group>"; };
-		5D2D10C6A9578367639B5FA2 /* listenbrainz.rs */ = {isa = PBXFileReference; path = listenbrainz.rs; sourceTree = "<group>"; };
-		6047075173E59EDCDF83413C /* hushio-desktop_iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "hushio-desktop_iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		613D7799342F5F5A0BBBEDCA /* mod.rs */ = {isa = PBXFileReference; path = mod.rs; sourceTree = "<group>"; };
-		61CC52E80FA9573B23640B45 /* audio_output.rs */ = {isa = PBXFileReference; path = audio_output.rs; sourceTree = "<group>"; };
-		6215552F8426021F5F369162 /* pip.rs */ = {isa = PBXFileReference; path = pip.rs; sourceTree = "<group>"; };
+		549F1843C6814E011A19E026 /* tests.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = tests.rs; sourceTree = "<group>"; };
+		5D2D10C6A9578367639B5FA2 /* listenbrainz.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = listenbrainz.rs; sourceTree = "<group>"; };
+		6047075173E59EDCDF83413C /* Hushio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hushio.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		613D7799342F5F5A0BBBEDCA /* mod.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = mod.rs; sourceTree = "<group>"; };
+		61CC52E80FA9573B23640B45 /* audio_output.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = audio_output.rs; sourceTree = "<group>"; };
+		6215552F8426021F5F369162 /* pip.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = pip.rs; sourceTree = "<group>"; };
 		65A4BE39FA2244A81AFDAB9F /* hushio-desktop_iOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "hushio-desktop_iOS.entitlements"; sourceTree = "<group>"; };
-		67CA38C1FF238C89B83AEB41 /* android.rs */ = {isa = PBXFileReference; path = android.rs; sourceTree = "<group>"; };
-		6A88ACA8A531FFF91D82EFB4 /* tests.rs */ = {isa = PBXFileReference; path = tests.rs; sourceTree = "<group>"; };
-		700C8392C4E6B96AC32898D4 /* persist.rs */ = {isa = PBXFileReference; path = persist.rs; sourceTree = "<group>"; };
-		7130643CA697D5C4A6FE3049 /* linux_portal.rs */ = {isa = PBXFileReference; path = linux_portal.rs; sourceTree = "<group>"; };
-		7145A7AB891B83CD0093D13E /* deletion_sync.rs */ = {isa = PBXFileReference; path = deletion_sync.rs; sourceTree = "<group>"; };
-		71DA0573C2F476FE0F5F6A11 /* cache_limit.rs */ = {isa = PBXFileReference; path = cache_limit.rs; sourceTree = "<group>"; };
-		7633F69E14E88706ED1307AB /* ios_scheme.rs */ = {isa = PBXFileReference; path = ios_scheme.rs; sourceTree = "<group>"; };
-		7C83D3D799D4256BEE316330 /* choice.rs */ = {isa = PBXFileReference; path = choice.rs; sourceTree = "<group>"; };
+		67CA38C1FF238C89B83AEB41 /* android.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = android.rs; sourceTree = "<group>"; };
+		6A88ACA8A531FFF91D82EFB4 /* tests.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = tests.rs; sourceTree = "<group>"; };
+		700C8392C4E6B96AC32898D4 /* persist.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = persist.rs; sourceTree = "<group>"; };
+		7130643CA697D5C4A6FE3049 /* linux_portal.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = linux_portal.rs; sourceTree = "<group>"; };
+		7145A7AB891B83CD0093D13E /* deletion_sync.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = deletion_sync.rs; sourceTree = "<group>"; };
+		71DA0573C2F476FE0F5F6A11 /* cache_limit.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = cache_limit.rs; sourceTree = "<group>"; };
+		7633F69E14E88706ED1307AB /* ios_scheme.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = ios_scheme.rs; sourceTree = "<group>"; };
+		7C83D3D799D4256BEE316330 /* choice.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = choice.rs; sourceTree = "<group>"; };
 		8589BA5DDA08799352723458 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		874B863511ED012A51464598 /* launch.rs */ = {isa = PBXFileReference; path = launch.rs; sourceTree = "<group>"; };
+		874B863511ED012A51464598 /* launch.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = launch.rs; sourceTree = "<group>"; };
 		89B07C78EE753DB12C88D674 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
-		90DBF4DA0EBDCE455DE3D9D6 /* yt_data_api.rs */ = {isa = PBXFileReference; path = yt_data_api.rs; sourceTree = "<group>"; };
-		91B9299751805CCF018BC0CB /* matching.rs */ = {isa = PBXFileReference; path = matching.rs; sourceTree = "<group>"; };
-		937FEA5DF5AC743AEC088DC0 /* macos_window.rs */ = {isa = PBXFileReference; path = macos_window.rs; sourceTree = "<group>"; };
-		972706E70936769CA1B1D97A /* updates.rs */ = {isa = PBXFileReference; path = updates.rs; sourceTree = "<group>"; };
-		98F45605BE9260F20DF91B13 /* downloads.rs */ = {isa = PBXFileReference; path = downloads.rs; sourceTree = "<group>"; };
-		994B8085BDB9D6015333CDA6 /* window.rs */ = {isa = PBXFileReference; path = window.rs; sourceTree = "<group>"; };
-		99DFE6608847ECA98F0DD903 /* tests.rs */ = {isa = PBXFileReference; path = tests.rs; sourceTree = "<group>"; };
-		9AAE9DDDFB608394B5C6DBFD /* cloud_payload.rs */ = {isa = PBXFileReference; path = cloud_payload.rs; sourceTree = "<group>"; };
-		A295635548B8D9C97860FC68 /* tests.rs */ = {isa = PBXFileReference; path = tests.rs; sourceTree = "<group>"; };
-		A33399F8ECA90ACCFB90B8BF /* tests.rs */ = {isa = PBXFileReference; path = tests.rs; sourceTree = "<group>"; };
-		A3A6507139BC00B2C6BFFEB8 /* menu.rs */ = {isa = PBXFileReference; path = menu.rs; sourceTree = "<group>"; };
-		A7EE2000B935421D99EB9611 /* drive_sync.rs */ = {isa = PBXFileReference; path = drive_sync.rs; sourceTree = "<group>"; };
+		90DBF4DA0EBDCE455DE3D9D6 /* yt_data_api.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = yt_data_api.rs; sourceTree = "<group>"; };
+		91B9299751805CCF018BC0CB /* matching.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = matching.rs; sourceTree = "<group>"; };
+		937FEA5DF5AC743AEC088DC0 /* macos_window.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = macos_window.rs; sourceTree = "<group>"; };
+		972706E70936769CA1B1D97A /* updates.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = updates.rs; sourceTree = "<group>"; };
+		98F45605BE9260F20DF91B13 /* downloads.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = downloads.rs; sourceTree = "<group>"; };
+		994B8085BDB9D6015333CDA6 /* window.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = window.rs; sourceTree = "<group>"; };
+		99DFE6608847ECA98F0DD903 /* tests.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = tests.rs; sourceTree = "<group>"; };
+		9AAE9DDDFB608394B5C6DBFD /* cloud_payload.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = cloud_payload.rs; sourceTree = "<group>"; };
+		A295635548B8D9C97860FC68 /* tests.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = tests.rs; sourceTree = "<group>"; };
+		A33399F8ECA90ACCFB90B8BF /* tests.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = tests.rs; sourceTree = "<group>"; };
+		A3A6507139BC00B2C6BFFEB8 /* menu.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = menu.rs; sourceTree = "<group>"; };
+		A7EE2000B935421D99EB9611 /* drive_sync.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = drive_sync.rs; sourceTree = "<group>"; };
 		A9F8210169DB5F1929A434E4 /* lrclib_search_coldplay_yellow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lrclib_search_coldplay_yellow.json; sourceTree = "<group>"; };
-		ABC9579C65B726BDD1D141C4 /* install_marker.rs */ = {isa = PBXFileReference; path = install_marker.rs; sourceTree = "<group>"; };
-		B3C59CFF157D8C589C41415C /* stream.rs */ = {isa = PBXFileReference; path = stream.rs; sourceTree = "<group>"; };
+		ABC9579C65B726BDD1D141C4 /* install_marker.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = install_marker.rs; sourceTree = "<group>"; };
+		B3C59CFF157D8C589C41415C /* stream.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = stream.rs; sourceTree = "<group>"; };
 		B894C19CA649A63ED72A4631 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
-		B9380325A541E7AF5D9B7ED7 /* analysis.rs */ = {isa = PBXFileReference; path = analysis.rs; sourceTree = "<group>"; };
-		BC59E56916A7BA50DE7B1586 /* mobile.rs */ = {isa = PBXFileReference; path = mobile.rs; sourceTree = "<group>"; };
-		BD946E11D9543872A9758CD3 /* taskbar.rs */ = {isa = PBXFileReference; path = taskbar.rs; sourceTree = "<group>"; };
-		C15AC902BA87E6A658E60BBA /* network.rs */ = {isa = PBXFileReference; path = network.rs; sourceTree = "<group>"; };
+		B9380325A541E7AF5D9B7ED7 /* analysis.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = analysis.rs; sourceTree = "<group>"; };
+		BC59E56916A7BA50DE7B1586 /* mobile.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = mobile.rs; sourceTree = "<group>"; };
+		BD946E11D9543872A9758CD3 /* taskbar.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = taskbar.rs; sourceTree = "<group>"; };
+		C15AC902BA87E6A658E60BBA /* network.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = network.rs; sourceTree = "<group>"; };
 		C23A33A6F830084DDD75B39A /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
-		C85D28D9790B2E78FCE3E211 /* google_auth.rs */ = {isa = PBXFileReference; path = google_auth.rs; sourceTree = "<group>"; };
-		CBF89659FB23E06F7F11DD34 /* stats.rs */ = {isa = PBXFileReference; path = stats.rs; sourceTree = "<group>"; };
-		D3BE04185C29CCC076D32FDD /* local_library.rs */ = {isa = PBXFileReference; path = local_library.rs; sourceTree = "<group>"; };
-		D47CFAD1386B8509D7E17CB1 /* discord.rs */ = {isa = PBXFileReference; path = discord.rs; sourceTree = "<group>"; };
-		D98DC4E9953DF55BFCC430EF /* tags.rs */ = {isa = PBXFileReference; path = tags.rs; sourceTree = "<group>"; };
+		C85D28D9790B2E78FCE3E211 /* google_auth.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = google_auth.rs; sourceTree = "<group>"; };
+		CBF89659FB23E06F7F11DD34 /* stats.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = stats.rs; sourceTree = "<group>"; };
+		D3BE04185C29CCC076D32FDD /* local_library.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = local_library.rs; sourceTree = "<group>"; };
+		D47CFAD1386B8509D7E17CB1 /* discord.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = discord.rs; sourceTree = "<group>"; };
+		D98DC4E9953DF55BFCC430EF /* tags.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = tags.rs; sourceTree = "<group>"; };
 		E0D26A4B063E9E3FB898BC92 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
-		E39A03C38AFAC88C69F2AF67 /* main.rs */ = {isa = PBXFileReference; path = main.rs; sourceTree = "<group>"; };
+		E39A03C38AFAC88C69F2AF67 /* main.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = main.rs; sourceTree = "<group>"; };
 		E87F3F67C4F25069246E30A5 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
-		E97EF04DDC5B3DEC19A20063 /* disconnect.rs */ = {isa = PBXFileReference; path = disconnect.rs; sourceTree = "<group>"; };
-		EEBBABE01BBA440C52325900 /* playback.rs */ = {isa = PBXFileReference; path = playback.rs; sourceTree = "<group>"; };
-		F079754E02838AD4A511236F /* secrets.rs */ = {isa = PBXFileReference; path = secrets.rs; sourceTree = "<group>"; };
+		E97EF04DDC5B3DEC19A20063 /* disconnect.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = disconnect.rs; sourceTree = "<group>"; };
+		EEBBABE01BBA440C52325900 /* playback.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = playback.rs; sourceTree = "<group>"; };
+		F079754E02838AD4A511236F /* secrets.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = secrets.rs; sourceTree = "<group>"; };
 		F357E36FBC6D493191FCBF41 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
-		F37026310B2C2460F12DC9D3 /* spotify_auth.rs */ = {isa = PBXFileReference; path = spotify_auth.rs; sourceTree = "<group>"; };
+		F37026310B2C2460F12DC9D3 /* spotify_auth.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = spotify_auth.rs; sourceTree = "<group>"; };
 		F3FF133AFA122BA20DB42398 /* bindings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bindings.h; sourceTree = "<group>"; };
-		F514656F58E21BBBEA5AC0F2 /* webdav.rs */ = {isa = PBXFileReference; path = webdav.rs; sourceTree = "<group>"; };
-		FB26E5CAFF66B93E72E4752D /* watch.rs */ = {isa = PBXFileReference; path = watch.rs; sourceTree = "<group>"; };
+		F514656F58E21BBBEA5AC0F2 /* webdav.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = webdav.rs; sourceTree = "<group>"; };
+		FB26E5CAFF66B93E72E4752D /* watch.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = watch.rs; sourceTree = "<group>"; };
 		FE231E3E9DD5A78548F077C6 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
-		FEC25FA14605A0D5AC762049 /* tray.rs */ = {isa = PBXFileReference; path = tray.rs; sourceTree = "<group>"; };
+		FEC25FA14605A0D5AC762049 /* tray.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = tray.rs; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -159,7 +159,7 @@
 		554B841C1D604514910A58F0 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				6047075173E59EDCDF83413C /* hushio-desktop_iOS.app */,
+				6047075173E59EDCDF83413C /* Hushio.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -348,20 +348,6 @@
 			path = bindings;
 			sourceTree = "<group>";
 		};
-		"TEMP_81BCCF0C-8087-407E-929F-2E7DD882F5F8" /* arm64 */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = arm64;
-			sourceTree = "<group>";
-		};
-		"TEMP_C48559B4-ABAB-4E1A-89E4-E9346323926F" /* x86_64 */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = x86_64;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -382,7 +368,7 @@
 			packageProductDependencies = (
 			);
 			productName = "hushio-desktop_iOS";
-			productReference = 6047075173E59EDCDF83413C /* hushio-desktop_iOS.app */;
+			productReference = 6047075173E59EDCDF83413C /* Hushio.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -392,9 +378,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1600;
-				TargetAttributes = {
-				};
+				LastUpgradeCheck = 2720;
 			};
 			buildConfigurationList = 27255F26BC7A752EF7EFC46F /* Build configuration list for PBXProject "hushio-desktop" */;
 			developmentRegion = en;
@@ -467,10 +451,6 @@
 		06AFCA60FA09F2BFEF804638 /* debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
-				ARCHS = (
-					arm64,
-				);
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = "hushio-desktop_iOS/hushio-desktop_iOS.entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
@@ -481,12 +461,25 @@
 					"\".\"",
 				);
 				INFOPLIST_FILE = "hushio-desktop_iOS/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
-				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				"LIBRARY_SEARCH_PATHS[arch=arm64]" = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION)",
+					"$(SDKROOT)/usr/lib/swift",
+					"$(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME)",
+					"$(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)",
+				);
+				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION)",
+					"$(SDKROOT)/usr/lib/swift",
+					"$(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME)",
+					"$(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.hushio.app.iosdev;
 				PRODUCT_NAME = "Hushio";
 				SDKROOT = iphoneos;
@@ -531,8 +524,10 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = Z2GA3JXA8J;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -553,6 +548,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -562,10 +558,6 @@
 		2C9232987E75D01A0095F02E /* release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
-				ARCHS = (
-					arm64,
-				);
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = "hushio-desktop_iOS/hushio-desktop_iOS.entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
@@ -576,12 +568,25 @@
 					"\".\"",
 				);
 				INFOPLIST_FILE = "hushio-desktop_iOS/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
-				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				"LIBRARY_SEARCH_PATHS[arch=arm64]" = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION)",
+					"$(SDKROOT)/usr/lib/swift",
+					"$(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME)",
+					"$(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)",
+				);
+				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION)",
+					"$(SDKROOT)/usr/lib/swift",
+					"$(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME)",
+					"$(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.hushio.app.iosdev;
 				PRODUCT_NAME = "Hushio";
 				SDKROOT = iphoneos;
@@ -626,8 +631,10 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = Z2GA3JXA8J;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -641,6 +648,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;

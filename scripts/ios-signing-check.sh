@@ -57,29 +57,22 @@ say "  $ids code-signing identit$( [[ "$ids" == "1" ]] && echo y || echo ies ) f
 security find-identity -v -p codesigning 2>/dev/null | grep -E '"[^"]+"' | sed 's/^/  /' || true
 
 section "Physical devices"
-# `devicectl` lists paired devices; `xcdevice` is Xcode's own view and is what decides
-# whether a build can target the device at all. Report both, and trust xcdevice.
-devices="$(xcrun devicectl list devices 2>/dev/null | grep -viE 'simulated|^Name|^---' | sed '/^$/d' || true)"
-if [[ -z "$devices" ]]; then
-  say "  none paired (devicectl)"
+# `devicectl` reports pairing; `xcdevice` reports what Xcode will build for. Neither
+# reflects Developer Mode, which `devicectl device info details` does - and Developer Mode
+# OFF is the failure people actually hit, so both views are printed.
+dev_output="$(python3 "$(dirname "${BASH_SOURCE[0]}")/ios-devices.py" 2>/dev/null || true)"
+dm="$(printf '%s\n' "$dev_output" | sed -n 's/^DEVELOPER_MODE=//p')"
+if printf '%s\n' "$dev_output" | grep -q '^NO_DEVICES$'; then
+  say "  none paired (see HUMAN_STEPS.md H1)"
 else
-  printf '%s\n' "$devices" | sed 's/^/  /'
+  printf '%s\n' "$dev_output" | grep -v '^DEVELOPER_MODE=' | while IFS='|' read -r name avail reason; do
+    [[ -z "$name" ]] && continue
+    say "  $name — Xcode usable: $avail — $reason"
+  done
 fi
-on_usb="$(system_profiler SPUSBDataType 2>/dev/null | grep -icE 'iphone|ipad' || true)"
-say "  USB attachment: ${on_usb} Apple device(s)"
-
-usable="$(xcrun xcdevice list 2>/dev/null | python3 -c '
-import json, sys
-try:
-    items = json.load(sys.stdin)
-except Exception:
-    print(0); raise SystemExit
-print(sum(1 for x in items
-          if not x.get("simulator")
-          and x.get("available")
-          and x.get("platform") == "com.apple.platform.iphoneos"))
-' || echo 0)"
-say "  devices Xcode considers available: ${usable}"
+say "  Developer Mode: ${dm:-Unknown}"
+usable="$(printf '%s\n' "$dev_output" | grep -c '|yes|' || true)"
+say "  devices Xcode considers available: ${usable:-0}"
 
 section "Generated project"
 if grep -q 'DEVELOPMENT_TEAM' src-tauri/gen/apple/hushio-desktop.xcodeproj/project.pbxproj 2>/dev/null; then
@@ -89,8 +82,18 @@ else
 fi
 
 section "Verdict"
-if [[ "${ids:-0}" -gt 0 && "${usable:-0}" -gt 0 ]]; then
-  say "  signing looks possible: certificate present and a device is reachable"
+if [[ "$dm" == "Disabled" ]]; then
+  say "  BLOCKED: the paired iPhone has Developer Mode turned OFF."
+  say "  xcodebuild: \"error: Developer Mode disabled — to use the device for"
+  say "  development, enable Developer Mode in Settings -> Privacy & Security.\""
+  say "  On the phone: Settings -> Privacy & Security -> Developer Mode -> On,"
+  say "  tap Restart, then confirm \"Turn On\" after unlocking."
+  say "  Then re-run this script (Developer Mode must read Enabled) and:"
+  say "    cd src-tauri && pnpm exec tauri ios build --debug -t aarch64 --ci"
+  say "  (that command already passes -allowProvisioningUpdates)."
+elif [[ "${ids:-0}" -gt 0 && "${usable:-0}" -gt 0 ]]; then
+  say "  signing looks possible: certificate present, device reachable, team wired"
+  say "  next: cd src-tauri && pnpm exec tauri ios build --debug -t aarch64 --ci"
 elif [[ "${usable:-0}" -gt 0 ]]; then
   say "  no certificate yet — a build will request one via -allowProvisioningUpdates"
   say "  (expect a keychain prompt: choose \"Always Allow\")"
@@ -99,7 +102,5 @@ else
   say "  A personal/free team cannot create a provisioning profile without one"
   say "  registered device; xcodebuild reports"
   say "    \"Your team has no devices from which to generate a provisioning profile.\""
-  say "  Next: connect the iPhone by cable, trust this Mac, enable Developer Mode,"
-  say "  then run:  pnpm exec tauri ios build --debug -t aarch64 --ci"
-  say "  (that command already passes -allowProvisioningUpdates)."
+  say "  Next: connect the iPhone by cable, tap Trust, then re-run this script."
 fi
