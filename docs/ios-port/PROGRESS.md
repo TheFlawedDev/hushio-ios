@@ -49,6 +49,25 @@ All are source-verifiable work (host `cargo`/`pnpm`/`swiftc -parse`), not iOS bu
 
 **Operational note:** Rex panes vanished mid-run (session revision churn; all created windows/panes dropped). Completed file edits persist on disk; only in-flight work and the final pane message are lost. Mitigation: agents now also write a handoff file (`../coordination/agent-handoff-*.md`) before finishing.
 
+## Milestone — remaining unblocked work complete (`port/ios-completion`)
+
+Branch `port/ios-completion` (from `port/ios` @ `1191f49`). Steps 1–5 of
+`REMAINING_SEQUENCE.md` are done and pushed; steps 6–8 are owner-gated (`HUMAN_STEPS.md`).
+
+| Work | Result |
+|---|---|
+| Notification facade | iOS `notification_*` now route to the Swift bridge (was a fabricated `granted`) |
+| Facade audit | `FACADE_AUDIT.md`; BGTaskScheduler identifier + launch handler added (the sync seam was dead on arrival); `mobile.rs` stubs classified inert with caller evidence |
+| ADR-007 | Playback occurrence identity + background ownership decided: no generation field, one additive `player-ended {id}`, native owns transport only |
+| Stale events | Shared engine guards + 8 tests; closes source defect D03 on both mobile platforms |
+| Sleep timer | Implemented natively (fade/pause/restore, pause-at-end); EQ/crossfade/skip-silence/leveling decided in `ADVANCED_AUDIO.md` |
+| Settings surfaces | `startUpdates()` iOS no-op, system-bar intent documented, tested |
+| Verification | `pnpm typecheck` 0; `pnpm test` 354 files / 3,756 tests; `cargo test` 634; `cargo check --target aarch64-apple-ios-sim` clean; `swift build` complete; simulator bundle builds, installs and launches (`evidence/ios-sim-after-sleep-timer.png`) |
+
+Fan-out note: four agents ran in parallel Rex panes; two panes vanished mid-run. Their files
+were reviewed and verified (advanced audio) or redone in-repo (facade audit) — see
+`../coordination/agent-handoff-fanout-recovery.md`.
+
 ## Active ownership
 
 | Task | Owner | Exclusive files | Dependencies | Acceptance |
