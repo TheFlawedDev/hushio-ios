@@ -104,6 +104,20 @@ while IFS= read -r file; do
   fi
 done <<< "$(git ls-files)"
 
+# Commit metadata: file contents are not the only place an address leaks. Only commits in
+# this port's own range are checked — the upstream baseline's authors keep their identity,
+# and rewriting someone else's authorship is not this script's business.
+base="$(git rev-parse --verify --quiet main || true)"
+if [[ -n "$base" ]]; then
+  author_leaks="$(git log --format='%ae %ce' "${base}..HEAD" 2>/dev/null | grep -E -o "[A-Za-z0-9._%+-]+@(gmail|googlemail|icloud|me|mac|outlook|hotmail|live|yahoo|proton|protonmail|aol|gmx|zoho)\.(com|me|net|org)" | sort -u || true)"
+  if [[ -n "$author_leaks" ]]; then
+    echo "leak: commit author/committer uses a personal email address:" >&2
+    printf '  %s\n' "$author_leaks" >&2
+    echo "  fix: git config user.email \"<id>+<username>@users.noreply.github.com\"" >&2
+    fail=1
+  fi
+fi
+
 if [[ "$fail" -ne 0 ]]; then
   echo "local path/username leak detected — refusing to continue" >&2
   exit 1

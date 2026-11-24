@@ -79,6 +79,16 @@ reports "not configured" — that is honest, not a gap to paper over.
 
 ## H3 — Repository actions
 
+Commit identity: commits on this branch use a GitHub **noreply** address, not a personal
+mailbox. If a new machine is used, set it before committing:
+
+```sh
+git config user.email "<your-github-id>+<username>@users.noreply.github.com"
+```
+
+`scripts/check-local-path-leaks.sh` fails if a commit in the port's range carries a personal
+address, or if any tracked file contains one.
+
 - The fork already has `port/ios` and `port/ios-completion` pushed. Opening a pull request is a
   owner action; no agent opens one.
 - Nothing needs publishing, purchasing or App Store submission.
