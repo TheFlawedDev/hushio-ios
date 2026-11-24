@@ -30,6 +30,8 @@
 | `ADVANCED_AUDIO.md` | Per-capability EQ/crossfade/skip-silence/leveling/sleep decisions |
 | `HUMAN_STEPS.md` | The only owner-gated inputs; agents prepare the seam instead of faking them |
 | `DEVICE_VERIFICATION.md` | Ordered device checklist that closes the remaining matrix rows |
+| `LAUNCH_IOS.md` | Deep-link/custom-scheme routing on iOS: what Tauri delivers and what stays open |
+| `ACCESSIBILITY_AUDIT.md` | Ranked P1/P2/P3 accessibility findings for the iPhone shell |
 
 ## Verification so far
 

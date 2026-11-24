@@ -27,6 +27,8 @@ provider credentials.
 | 5 Advanced audio | **Done in source** — sleep timer implemented; EQ/crossfade/skip-silence/leveling decided in `ADVANCED_AUDIO.md` |
 | 6–8 Device work | **Blocked on `HUMAN_STEPS.md` H1/H2** — checklist ready in `DEVICE_VERIFICATION.md` |
 | 9 Closure docs | Partially done; final sweep needs 6–8 |
+| E1/E2 accessibility | Static audit complete (`ACCESSIBILITY_AUDIT.md`); 6 P1 fixes queued, device assessment still needed |
+| Deep-link routing | Scheme + `deep-link://new-url` routing implemented (`LAUNCH_IOS.md`); iOS file launches remain OPEN pending device |
 
 ---
 

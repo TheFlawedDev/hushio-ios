@@ -61,7 +61,7 @@ actually built and actually run.
 | OAuth via `ASWebAuthenticationSession` | **BLOCK** | Flow + URL scheme registered in Info.plist, but `HUSHIO_GOOGLE_CLIENT_ID` / `HUSHIO_SPOTIFY_CLIENT_ID` are not configured — documented configuration blocker, not a code gap |
 | Background sync retry (BGTaskScheduler) | **SRC** | `BGTaskSchedulerPermittedIdentifiers` added to `Info.ios.plist` and a launch handler is registered once in `HushioSyncPlugin.load`; `schedule` rejects `bg_task_not_registered` if the OS refuses, and the handler completes the task as failed rather than pretending the Rust queue ran. Best-effort by nature; device-unverified |
 | In-app updates | **N/A** | iOS distribution is Xcode dev signing / TestFlight / App Store; the updater row is hidden and `update` rejects |
-| Deep-link / custom scheme | **PARTIAL SRC** | `hushio`, `hushio-spotify` and the OAuth scheme are registered in Info.plist; runtime `register_scheme` is desktop-only (gated, warning removed). iOS URL → launch-action wiring is **OPEN** |
+| Deep-link / custom scheme | **SRC** | `hushio` is declared in `Info.ios.plist` and now in `tauri.ios.conf.json` (`plugins.deep-link.mobile`); `launch.ts` subscribes to `deep-link://new-url` (the event `tauri-plugin-deep-link` emits from `RunEvent::Opened` on iOS) and routes playlist links through the shared layer. iOS **file** launches stay OPEN — security-scoped access needs a device test. Detail: `LAUNCH_IOS.md` |
 
 ## 4. Shared product surface
 
@@ -76,7 +76,7 @@ actually built and actually run.
 | Settings row membership | **SRC** | `IOS_HIDDEN_ROWS` = Android's set + in-app updater; mobile-only rows (cellular quality, haptics, Wi-Fi-only downloads) now included |
 | In-app updater on iOS | **N/A** | `startUpdates()` is an explicit no-op returning a safe cleanup — it no longer falls through to the desktop path that called the rejected Rust updater command and registered a listener. Asserted by test |
 | System-bar theming on iOS | **N/A** | `theme.ts` documents that bars are system-owned; `player_set_system_bars` rejects `not_supported` and is never called off Android. Asserted by test |
-| Accessibility / VoiceOver / Dynamic Type audit | **OPEN** | Not yet performed; requires device testing |
+| Accessibility / VoiceOver / Dynamic Type audit | **OPEN (audited, unfixed)** | Static audit complete: `ACCESSIBILITY_AUDIT.md` — 6 P1, 10 P2, 5 P3 findings with file:line and code quotes. Fixes not applied (they collide with the design review); VoiceOver/rotor/runtime target sizes still need a device |
 | Visual fidelity review (all required views, both themes) | **OPEN** | Only reachable views captured; navigation needs interaction or a device session |
 
 ## 5. Test evidence

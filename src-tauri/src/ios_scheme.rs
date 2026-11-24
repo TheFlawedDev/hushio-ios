@@ -1,4 +1,4 @@
-//! iOS-only constants shared by the auth flows.
+//! iOS-only constants shared by the auth and deep-link routing flows.
 //!
 //! The ASWebAuthenticationSession callback scheme must match the scheme the redirect URI
 //! is built from, otherwise the browser session can never complete. It is the app's bundle
@@ -10,3 +10,11 @@
 /// `com.hushio.app.iosdev:/oauth2redirect` (the same `<scheme>:/oauth2redirect` shape
 /// Android uses via `RedirectUri.PATH`).
 pub const REDIRECT_SCHEME: &str = "com.hushio.app.iosdev";
+
+/// The app custom URL scheme registered in `Info.ios.plist` and configured in
+/// `tauri.ios.conf.json` for deep linking and playlist routing (`hushio://...`).
+/// Matches `crate::launch::SCHEME`.
+pub const APP_SCHEME: &str = "hushio";
+
+/// Spotify OAuth redirect custom URL scheme registered in `Info.ios.plist`.
+pub const SPOTIFY_SCHEME: &str = "hushio-spotify";

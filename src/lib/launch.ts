@@ -8,11 +8,12 @@ import {
   playerTakeLaunch,
   type LaunchAction,
 } from "./bridge";
-import { launchTargetFor, type LaunchPayload, type LaunchTarget } from "./launchLink";
+import { launchTargetFor, type LaunchPayload, type LaunchTarget, parseAppLink } from "./launchLink";
 import { dropPaths } from "./localDrop";
 import { useNavigation } from "../stores/navigation";
 import { usePlayer } from "../stores/player";
 import { adoptNativeItem } from "./androidEngine";
+import { listen } from "@tauri-apps/api/event";
 
 const SHARED_VIDEO_TITLE = "Shared YouTube video";
 const OPENED_FILE_TITLE = "Opened audio file";
@@ -56,6 +57,14 @@ export async function routeLaunchTarget(target: LaunchTarget): Promise<void> {
     await playOpenedFile(target.uri);
     return;
   }
+  if (platform === "ios") {
+    // Security-scoped file URLs on iOS require startAccessingSecurityScopedResource
+    // and durable bookmarks (see DocumentPicker.swift). Raw file path access fails
+    // or revokes across launches without a security-scoped bookmark.
+    // Documented as OPEN with the hardware verification blocker in docs/ios-port/LAUNCH_IOS.md.
+    console.warn(`[hushio] file launch routing on iOS is deferred pending physical device verification: ${target.uri}`);
+    return;
+  }
   await dropPaths([target.uri]);
 }
 
@@ -65,6 +74,19 @@ export function routeLaunchAction(action: LaunchAction): Promise<void> {
   );
 }
 
+export function launchActionForUrl(rawUrl: string): LaunchAction | null {
+  const trimmed = rawUrl.trim();
+  const appTarget = parseAppLink(trimmed);
+  if (appTarget?.kind === "playlist") {
+    return { type: "playlist", id: appTarget.id };
+  }
+  if (trimmed.startsWith("file://") || (platform !== "windows" && trimmed.startsWith("/"))) {
+    const path = trimmed.startsWith("file://") ? decodeURI(trimmed.replace(/^file:\/\//, "")) : trimmed;
+    return { type: "file", path };
+  }
+  return null;
+}
+
 function targetOf(payload: Partial<LaunchPayload>): LaunchTarget | null {
   if (!payload.kind || payload.value === undefined) return null;
   return launchTargetFor({ kind: payload.kind, value: payload.value });
@@ -72,7 +94,7 @@ function targetOf(payload: Partial<LaunchPayload>): LaunchTarget | null {
 
 export function startLaunchActions(): () => void {
   let live = true;
-  let stop: (() => void) | undefined;
+  const stops: (() => void)[] = [];
   const android = platform === "android";
 
   const drain = () => {
@@ -92,17 +114,44 @@ export function startLaunchActions(): () => void {
       .catch(() => {});
   };
 
-  const listening = android ? listenPlayerEvent("launch-intent", drain) : listenLaunchPending(drain);
-  void listening
-    .then((unlisten) => {
-      if (live) stop = unlisten;
-      else unlisten();
+  const handleDeepLinkUrls = (urls: unknown) => {
+    const list = Array.isArray(urls) ? urls : [urls];
+    for (const item of list) {
+      if (typeof item !== "string") continue;
+      const action = launchActionForUrl(item);
+      if (action) void routeLaunchAction(action);
+    }
+  };
+
+  if (android) {
+    void listenPlayerEvent("launch-intent", drain)
+      .then((unlisten) => {
+        if (live) stops.push(unlisten);
+        else unlisten();
+      })
+      .catch(() => {});
+  } else {
+    void listenLaunchPending(drain)
+      .then((unlisten) => {
+        if (live) stops.push(unlisten);
+        else unlisten();
+      })
+      .catch(() => {});
+
+    void listen<string | string[]>("deep-link://new-url", (event) => {
+      handleDeepLinkUrls(event.payload);
     })
-    .catch(() => {});
+      .then((unlisten) => {
+        if (live) stops.push(unlisten);
+        else unlisten();
+      })
+      .catch(() => {});
+  }
+
   drain();
 
   return () => {
     live = false;
-    stop?.();
+    for (const stop of stops) stop();
   };
 }
