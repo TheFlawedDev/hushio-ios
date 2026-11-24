@@ -88,6 +88,9 @@ actually built and actually run.
 | `cargo test --locked` | 634 pass, 0 fail |
 | `swift build` (iOS sim triple) | Build complete |
 | `tauri ios build --debug -t aarch64-sim` | exit 0 |
+| `tauri ios build --debug -t aarch64-sim` after the sleep-timer + BGTask changes | exit 0; bundle rebuilt; merged Info.plist verified (`BGTaskSchedulerPermittedIdentifiers`, `UIBackgroundModes:audio`, three URL schemes) |
+| Simulator install + launch of that bundle | PID alive (`UIKitApplication:com.hushio.app.iosdev`); `evidence/ios-sim-after-sleep-timer.png` |
+| `cargo check --target aarch64-apple-ios-sim` | clean (only pre-existing warnings) — validates the `cfg(target_os = "ios")` branches a host check skips |
 | P8 controlled-audio probe | **PASS** (see `PHASE_C_VERIFICATION.md`) |
 | Physical device build | **BLOCKED** on signing |
 
