@@ -66,6 +66,14 @@ targets:
         RUST_LOG: info
     settings:
       base:
+        # Xcode 15+ sandboxes build-phase scripts. The "Build Rust Code" phase has to read
+        # gen/apple/.tauri/cli-options-server.json, which the parent `tauri ios build`
+        # process writes; under the sandbox that read is denied and the build fails with
+        #   error: Sandbox: node(...) deny(1) file-read-data .../cli-options-server.json
+        #   failed to read ... : Operation not permitted (os error 1)
+        # Disabling user script sandboxing for this target is the documented fix; it only
+        # affects build-time scripts, not the app's runtime sandbox.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
         ENABLE_BITCODE: false
         ARCHS: [arm64]
         VALID_ARCHS: arm64 
