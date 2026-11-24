@@ -352,7 +352,7 @@ export function PhoneQueueList() {
                         haptic("tick");
                       }
                     }}
-                    className="grid h-12 w-10 shrink-0 cursor-grab touch-none place-items-center rounded-full text-ink-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                    className="grid h-12 w-11 min-w-11 shrink-0 cursor-grab touch-none place-items-center rounded-full text-ink-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                   >
                     <PhoneIcon icon={DotsSixVertical} />
                   </button>

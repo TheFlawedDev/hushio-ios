@@ -198,7 +198,7 @@ function tvRows(visible: boolean, tv: TvContext): RowSpec[] {
 }
 
 const DANGER_BUTTON =
-  "inline-flex h-9 items-center justify-center rounded-[8px] bg-danger px-4 text-body font-medium text-on-danger motion-safe:transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
+  "inline-flex h-9 min-h-[var(--hit-min,44px)] items-center justify-center rounded-[8px] bg-danger px-4 text-body font-medium text-on-danger motion-safe:transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
 
 function accountCategory({ settings: s, auth, sync, platform }: BuildContext): SettingsCategory {
   const device = deviceNoun(platform);
@@ -1107,12 +1107,19 @@ const ANDROID_HIDDEN_ROWS = new Set([
 ]);
 
 /** Rows whose capability genuinely does not exist on iOS. Mirrors the Android set (this
- * port's player has no crossfade/Automix/EQ-driven rows, and iOS has no system tray,
- * desktop audio-sink picker, desktop download folder, MediaStore export or Discord IPC),
- * and additionally drops the in-app updater: iOS distribution is Xcode development
- * signing / TestFlight / App Store, so a "Check for updates" control backed by the mobile
- * stub would be a fabricated success. See docs/ios-port/FEATURE_MATRIX.md. */
-const IOS_HIDDEN_ROWS = new Set([...ANDROID_HIDDEN_ROWS, "updates", "auto-update-check"]);
+ * port's player has no crossfade/Automix, and iOS has no system tray, desktop audio-sink
+ * picker, desktop download folder, MediaStore export or Discord IPC). Additionally hides:
+ * - "equalizer": player_set_eq rejects not_implemented (AVPlayer lacks an EQ node without AVAudioEngine rebuild)
+ * - "skip-silence": player_set_skip_silence rejects not_supported (AVPlayer has no silence gate)
+ * - in-app updater ("updates", "auto-update-check"): iOS distribution is Xcode / TestFlight / App Store
+ * See docs/ios-port/FEATURE_MATRIX.md, ADVANCED_AUDIO.md, and ACCESSIBILITY_AUDIT.md (#9, #10). */
+const IOS_HIDDEN_ROWS = new Set([
+  ...ANDROID_HIDDEN_ROWS,
+  "equalizer",
+  "skip-silence",
+  "updates",
+  "auto-update-check",
+]);
 
 function hiddenRowsFor(platform: Platform): Set<string> | null {
   if (platform === "android") return ANDROID_HIDDEN_ROWS;
@@ -1130,10 +1137,15 @@ function forPlatform(categories: SettingsCategory[], platform: Platform): Settin
   return categories.map((category) => ({
     ...category,
     groups: category.groups
-      .map((group) => ({
-        ...group,
-        rows: group.rows.filter((row) => !hidden.has(row.id)),
-      }))
+      .map((group) => {
+        const rows = group.rows.filter((row) => !hidden.has(row.id));
+        const body = group.rows.length > 0 && rows.length === 0 ? undefined : group.body;
+        return {
+          ...group,
+          rows,
+          body,
+        };
+      })
       .filter((group) => group.rows.length > 0 || group.body !== undefined),
   }));
 }

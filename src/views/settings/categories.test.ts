@@ -159,9 +159,40 @@ describe("Android rows", () => {
     expect(soundOrPlayback("linux", "crossfade").control).toBeDefined();
   });
 
+  it("keeps equalizer and skip-silence rows present on Android", () => {
+    const androidIds = ids("android");
+    expect(androidIds).toContain("equalizer");
+    expect(androidIds).toContain("skip-silence");
+    const soundAndroid = buildCategories(context("android")).find((c) => c.id === "sound");
+    expect(soundAndroid?.groups.some((g) => g.body !== undefined)).toBe(true);
+  });
+
   it("keeps the other playback rows active", () => {
     expect(soundOrPlayback("android", "autoplay").toggle).toBeDefined();
     expect(soundOrPlayback("android", "autoplay").disabled).toBeFalsy();
+  });
+});
+
+describe("iOS rows", () => {
+  const ids = (platform: BuildContext["platform"]) =>
+    buildCategories(context(platform)).flatMap((category) => category.groups.flatMap((group) => group.rows.map((item) => item.id)));
+
+  it("hides equalizer and skip-silence rows on iOS while keeping them on Android", () => {
+    const iosIds = ids("ios");
+    const androidIds = ids("android");
+
+    expect(iosIds).not.toContain("equalizer");
+    expect(iosIds).not.toContain("skip-silence");
+
+    expect(androidIds).toContain("equalizer");
+    expect(androidIds).toContain("skip-silence");
+  });
+
+  it("does not mount the Equalizer body or band sliders on iOS", () => {
+    const soundIos = buildCategories(context("ios")).find((c) => c.id === "sound");
+    expect(soundIos).toBeDefined();
+    const hasEqBody = soundIos?.groups.some((g) => g.body !== undefined);
+    expect(hasEqBody).toBe(false);
   });
 });
 

@@ -220,6 +220,13 @@ describe("PhoneQueueSheet accessibility", () => {
     expect(labels).toContain("Move down");
     expect(labels).toContain("Remove from queue");
   });
+
+  it("provides at least 44pt touch target on the drag handle", () => {
+    render(<PhoneQueueList />);
+    const handle = screen.getByRole("button", { name: "Drag Second to reorder" });
+    expect(handle.className).toContain("w-11");
+    expect(handle.className).toContain("h-12");
+  });
 });
 
 describe("Sheet accessibility", () => {
