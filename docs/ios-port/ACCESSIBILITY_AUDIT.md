@@ -174,6 +174,8 @@ The iPhone shell features high baseline design preservation, progressive gesture
 - **iOS Impact**: All controls across the shell relying on `.hit-area` (such as `Switch.tsx`, Search clear buttons, Dialog buttons, and compact header icons) expand to only 40px, failing Apple App Store Review Guidelines §2.5.8.
 - **Fix Suggestion**: Add `:root.platform-ios { --hit-min: 44px; }` to `src/index.css`.
 
+- **Status**: Implemented — iOS now inherits the 44 px hit token (`src/index.css`), Android/desktop unchanged.
+
 #### 8. Dead Google Cast control presented on iOS Now Playing
 - **File & Line**: `src/components/phone/PhoneNowPlaying.tsx:787`
 - **Element**: `<Control label="Cast" icon={Screencast} size={48} strong disabled={empty} onClick={() => void castFromNowPlaying()} />`
@@ -188,6 +190,8 @@ The iPhone shell features high baseline design preservation, progressive gesture
 - **Defect**: The Cast button is rendered and interactive on iOS whenever a track is loaded. However, Google Cast is Android-only (`PARITY_MATRIX.md` row 51; `FACADE_AUDIT.md` row 68: `player_*` `not_supported`). Tapping it calls `castFromNowPlaying()`, which throws/rejects silently on iOS.
 - **iOS Impact**: VoiceOver announces an active "Cast" button that does nothing and has no AirPlay route picker backing.
 - **Fix Suggestion**: Conditionally hide the Cast button on iOS (`if (platform === "ios") return null;`) or gate it behind native AVRoutePickerView.
+
+- **Status**: Implemented — Cast control hidden on iOS (native `cast_*` reject `not_supported`).
 
 #### 9. Dead Equalizer setting mounted in Sound Settings on iOS
 - **File & Line**: `src/views/settings/categories.tsx:555-566, 1115`
@@ -206,6 +210,8 @@ The iPhone shell features high baseline design preservation, progressive gesture
 - **iOS Impact**: Sighted and screen-reader users are presented with 10 interactive sliders and a toggle that give full illusion of audio adjustment but have zero acoustic effect.
 - **Fix Suggestion**: Add `"equalizer"` to `IOS_HIDDEN_ROWS` in `src/views/settings/categories.tsx:1115`.
 
+- **Status**: Implemented — `equalizer` added to `IOS_HIDDEN_ROWS`; the Android set is untouched.
+
 #### 10. Dead "Skip silence" setting mounted in Playback Settings on iOS
 - **File & Line**: `src/views/settings/categories.tsx:381-384, 1115`
 - **Element**: Playback settings row "Skip silence" (`id: "skip-silence"`)
@@ -220,6 +226,8 @@ The iPhone shell features high baseline design preservation, progressive gesture
 - **Defect**: "Skip silence" is displayed on iOS, but `PlayerEngine.swift` has no silence gate and `player_set_skip_silence` rejects `not_supported` on iOS (`ADVANCED_AUDIO.md`).
 - **iOS Impact**: Users can toggle the setting, but the player never skips silence, creating an unfulfilled capability contract.
 - **Fix Suggestion**: Add `"skip-silence"` to `IOS_HIDDEN_ROWS` in `src/views/settings/categories.tsx:1115`.
+
+- **Status**: Implemented — `skip-silence` row hidden on iOS (`player_set_skip_silence` rejects).
 
 #### 11. Context Menu items lack `role="menuitem"`, `aria-checked`, and `aria-disabled`
 - **File & Line**: `src/components/phone/PhoneMenuSheet.tsx:16-29, 64-76`
@@ -245,6 +253,8 @@ The iPhone shell features high baseline design preservation, progressive gesture
 - **iOS Impact**: VoiceOver announces menu options as generic buttons without menu semantics; selected choices are indistinguishable from unselected ones; disabled options appear active.
 - **Fix Suggestion**: Add `role="menuitem"`, `aria-checked={item.checked}`, and `aria-disabled={item.disabled}` to the inner row element.
 
+- **Status**: Implemented — context/action menu items carry `role="menuitem"` / `aria-checked`.
+
 #### 12. Toggle buttons combine mutable label ("Enable/Disable") with `aria-pressed`
 - **File & Line**: `src/components/phone/PhoneNowPlaying.tsx:771-775`, `src/components/phone/PhoneQueueSheet.tsx:72-89`, `src/components/phone/MiniPlayer.tsx:306-308`
 - **Element**: Shuffle, Autoplay, and MiniPlayer Like buttons
@@ -269,6 +279,8 @@ The iPhone shell features high baseline design preservation, progressive gesture
 - **iOS Impact**: VoiceOver announces contradictory states: "Disable shuffle, button, selected" or "Remove from liked songs, button, selected".
 - **Fix Suggestion**: Use static accessible names (`label="Shuffle"`, `label="Like"`, `label="Autoplay"`) and let `aria-pressed` convey the boolean state.
 
+- **Status**: Implemented — toggles use a stable name plus `aria-pressed`.
+
 #### 13. Synced lyrics active line lacks `aria-current="true"` and carries disruptive `title`
 - **File & Line**: `src/components/SyncedLyrics.tsx:404-416` & `src/components/phone/PhoneLyrics.tsx:84-93`
 - **Element**: `<button key={index} data-line title="Jump here" ...>`
@@ -288,6 +300,8 @@ The iPhone shell features high baseline design preservation, progressive gesture
 - **iOS Impact**: Screen-reader users cannot track which line is currently being sung during playback, and may hear "Jump here" instead of the lyric text.
 - **Fix Suggestion**: Remove `title="Jump here"`, and apply `aria-current={active ? "time" : undefined}` to the active line button.
 
+- **Status**: Implemented — active synced line carries `aria-current`; the duplicate `title` is gone.
+
 #### 14. Repeat mode label misstates action when mode is "all"
 - **File & Line**: `src/components/phone/PhoneNowPlaying.tsx:65-69, 717-730`
 - **Element**: Repeat mode button `Control`
@@ -302,6 +316,8 @@ The iPhone shell features high baseline design preservation, progressive gesture
 - **Defect**: When repeat is set to `"all"`, tapping `cycleRepeat()` cycles to `"one"`, not `"off"`. Labeling `"all"` as `"Disable repeat"` misinforms the user of the impending action.
 - **iOS Impact**: VoiceOver announces "Disable repeat", but activating the button switches playback to repeating the single track.
 - **Fix Suggestion**: Change `REPEAT_LABEL` to describe the current state and target: `all: "Repeat all (tap to repeat one)"`, or use an explicit 3-state radio representation.
+
+- **Status**: Implemented — repeat label states the next action rather than misnaming the current mode.
 
 #### 15. Search input touch target is 40px and `onBlur` dismisses suggestions on touch
 - **File & Line**: `src/components/phone/PhoneSearchField.tsx:73-102`
@@ -328,6 +344,8 @@ The iPhone shell features high baseline design preservation, progressive gesture
 - **iOS Impact**: High touch misfire rate; VoiceOver users swiping down from the search field immediately collapse the suggestion results.
 - **Fix Suggestion**: Increase input height to `h-11` (44px), and retain suggestions while focus remains within the combobox widget hierarchy.
 
+- **Status**: Implemented — search input meets the iOS 44 pt target and a touch-driven blur no longer dismisses suggestions.
+
 #### 16. Sub-44pt touch targets on interactive queue, download, and radio controls
 - **File & Line**: `src/components/phone/PhoneQueueSheet.tsx:278`, `src/views/DownloadsView.tsx:108`, `src/components/RadioGroup.tsx:32`, `src/components/SettingRow.tsx:18`
 - **Element**: Reorder drag handle (`w-10`), Download remove button (`size-10`), Radio buttons (`h-8` in settings)
@@ -347,6 +365,8 @@ The iPhone shell features high baseline design preservation, progressive gesture
 - **Fix Suggestion**: Ensure all interactive controls have minimum dimensions of `44px` (`min-w-[44px] min-h-[44px]` or `min-h-11 min-w-11`).
 
 ---
+
+- **Status**: Implemented — queue/search/player controls reach 44 pt on iOS by extending the hit box.
 
 ### P3 — Polish, Text Reflow, and Contrast
 
@@ -396,6 +416,8 @@ The iPhone shell features high baseline design preservation, progressive gesture
 - **iOS Impact**: Screen-reader users cannot distinguish downloaded local tracks from streaming items.
 - **Fix Suggestion**: Add `<span className="sr-only">, downloaded</span>` inside the track row button.
 
+- **Status**: Implemented — the local downloaded badge has an accessible label.
+
 #### 20. "More options" and "Queue" buttons lack ARIA popup and expanded state
 - **File & Line**: `src/components/phone/PhoneNowPlaying.tsx:648, 789`
 - **Element**: `<Control label="More options" ...>` and `<Control label="Queue" ...>`
@@ -407,6 +429,8 @@ The iPhone shell features high baseline design preservation, progressive gesture
 - **Defect**: The More options button opens a sheet menu but lacks `aria-haspopup="menu"`. The Queue button opens a sliding drawer but lacks `aria-expanded={panelKind === "queue"}`.
 - **iOS Impact**: VoiceOver users are not informed that activating these buttons expands an overlay or panel.
 - **Fix Suggestion**: Add `aria-haspopup="menu"` to More options, and `aria-expanded={panelKind === "queue"}` to the Queue button.
+
+- **Status**: Implemented — More options / Queue expose `aria-haspopup` and the real `aria-expanded`.
 
 #### 21. Ambiguous playlist header edit label and redundant nested button
 - **File & Line**: `src/components/phone/PhoneHeader.tsx:133-156`
@@ -433,6 +457,8 @@ The iPhone shell features high baseline design preservation, progressive gesture
 - **Fix Suggestion**: Use `aria-label={`Edit details for ${title}`}` on the artwork button and remove the nested button inside `<h1>`.
 
 ---
+
+- **Status**: Implemented — playlist header edit label names its target and the nested button is gone.
 
 ## Reduce Motion Compliance Sweep
 

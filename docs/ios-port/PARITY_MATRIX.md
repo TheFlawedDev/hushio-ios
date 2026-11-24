@@ -73,10 +73,10 @@ actually built and actually run.
 | Haptics via `UIImpactFeedbackGenerator` | **SRC** | `haptic()` maps to `player_haptic_tick` on iOS |
 | Keep-awake via `isIdleTimerDisabled` | **SRC** | `setKeepAwake` routes to the plugin on iOS |
 | PiP button / desktop output-device picker | **N/A** | Hidden on iOS (desktop-only capabilities) |
-| Settings row membership | **SRC** | `IOS_HIDDEN_ROWS` = Android's set + in-app updater; mobile-only rows (cellular quality, haptics, Wi-Fi-only downloads) now included |
+| Settings row membership | **SRC** | `IOS_HIDDEN_ROWS` = Android's set + in-app updater + EQ + skip-silence; mobile-only rows (cellular quality, haptics, Wi-Fi-only downloads) included. Rows that present a capability the native layer refuses are no longer mounted on iOS (audit #9/#10) |
 | In-app updater on iOS | **N/A** | `startUpdates()` is an explicit no-op returning a safe cleanup — it no longer falls through to the desktop path that called the rejected Rust updater command and registered a listener. Asserted by test |
 | System-bar theming on iOS | **N/A** | `theme.ts` documents that bars are system-owned; `player_set_system_bars` rejects `not_supported` and is never called off Android. Asserted by test |
-| Accessibility / VoiceOver / Dynamic Type audit | **OPEN (audited, unfixed)** | Static audit complete: `ACCESSIBILITY_AUDIT.md` — 6 P1, 10 P2, 5 P3 findings with file:line and code quotes. Fixes not applied (they collide with the design review); VoiceOver/rotor/runtime target sizes still need a device |
+| Accessibility / VoiceOver / Dynamic Type audit | **V-HOST (static scope)** | `ACCESSIBILITY_AUDIT.md`: 6 P1 + 10 P2 fixed with tests, 5 P3 documented (4 fixed). Focus traps, accessible names, `aria-current`, 44 pt targets, popup state and dead-control gating are all covered by the component suites (3,800 tests). VoiceOver rotor behaviour, real target sizes and Dynamic Type reflow still need a device |
 | Visual fidelity review (all required views, both themes) | **OPEN** | Only reachable views captured; navigation needs interaction or a device session |
 
 ## 5. Test evidence

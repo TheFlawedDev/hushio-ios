@@ -77,6 +77,25 @@ Briefs must name an in-repo deliverable, because a closed pane takes the final m
 Files were reviewed and verified (advanced audio) or redone in-repo (facade audit) — see
 `../coordination/agent-handoff-fanout-recovery.md`.
 
+## Milestone — accessibility and iOS honesty sweep complete
+
+Five subagent commits landed on `port/ios-completion`, each verified before/after:
+
+| Commit | Scope |
+|---|---|
+| `4ba9de2` | `hushio://` deep-link routing + static accessibility audit |
+| `3b98a10` | iOS 44 pt hit token, menu/toggle semantics, dead-control gating |
+| `108bbba` | iOS security-scoped audio file launch (`adopt_launch_file` selector + Rust facade) |
+| `d0fcfc3` | EQ/skip-silence rows hidden on iOS, search field target + touch blur guard |
+| `7b553ad` | player chrome: lyrics `aria-current`, repeat copy, download badge, popup state, playlist header |
+| `93d747f` | lead follow-up: focus-visible rule compliance + composed accessible names |
+
+Result: 6 P1 and 10 P2 accessibility findings fixed with tests; 4 of 5 P3 items fixed, the rest
+documented. Full suite 355 files / 3,800 tests; typecheck 0; `cargo check
+--target aarch64-apple-ios-sim` clean; Swift package builds.
+
+Remaining work is device-gated only: `DEVICE_VERIFICATION.md` + `HUMAN_STEPS.md` H1/H2.
+
 ## Active ownership
 
 | Task | Owner | Exclusive files | Dependencies | Acceptance |
