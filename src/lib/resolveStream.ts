@@ -1,5 +1,6 @@
 import { onMemoryTrim } from "./memoryTrim";
 import { ytFetch as fetch } from "./ytFetch";
+import { jsLog } from "./bridge";
 import type { Innertube } from "youtubei.js";
 import { getSession, MARKET, resetSession } from "./innertube";
 import { isJioSaavnId, resolveJioSaavnStream } from "./jiosaavn";
@@ -124,6 +125,7 @@ async function formatUrl(format: AudioFormat, player: unknown): Promise<string |
     return null;
   } catch (error) {
     console.warn(`[hushio] stream deciphering failed: ${describeError(error)}`);
+    jsLog("warn", `stream deciphering failed: ${describeError(error)}`);
     return null;
   }
 }
@@ -206,6 +208,7 @@ export async function probeUrl(url: string, cancel?: AbortSignal): Promise<boole
     if (response.status !== 206 && response.status !== 200) {
       await response.body?.cancel();
       console.warn(`[hushio] stream probe rejected: HTTP ${response.status}`);
+      jsLog("warn", `stream probe rejected: HTTP ${response.status}`);
       return false;
     }
     const reader = response.body?.getReader();
@@ -225,6 +228,7 @@ export async function probeUrl(url: string, cancel?: AbortSignal): Promise<boole
         ? "cancelled"
         : describeError(error);
     console.warn(`[hushio] stream probe failed: ${reason}`);
+    jsLog("warn", `stream probe failed: ${reason}`);
     return false;
   }
 }
@@ -256,6 +260,7 @@ export async function resolveViaPiped(videoId: string): Promise<ResolvedStream> 
         };
     } catch (error) {
       console.warn(`[hushio] Piped mirror ${base} failed: ${describeError(error)}`);
+      jsLog("warn", `Piped mirror failed: ${describeError(error)}`);
     }
   }
   throw new Error("No Piped mirror had a playable stream");
@@ -323,6 +328,7 @@ async function resolveUncached(videoId: string, options: ResolveOptions): Promis
       console.warn(
         `[hushio] all clients failed, rebuilding session with a fresh PO token: ${describeError(lastError)}`,
       );
+      jsLog("warn", `all clients failed, rebuilding session: ${describeError(lastError)}`);
       await resetSession(MARKET);
     }
     const { innertube, context } = await getSession(MARKET);
@@ -344,6 +350,7 @@ async function resolveUncached(videoId: string, options: ResolveOptions): Promis
     return { stream: await resolveViaPiped(videoId), verified: true };
   } catch (pipedError) {
     console.warn(`[hushio] Piped fallback failed: ${describeError(pipedError)}`);
+    jsLog("warn", `Piped fallback failed: ${describeError(pipedError)}`);
     throw lastError instanceof Error ? lastError : new Error("Could not resolve a playable audio stream");
   }
 }

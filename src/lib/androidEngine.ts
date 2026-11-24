@@ -136,6 +136,11 @@ export async function androidPlayStream(id: string, title: string, fromSeconds =
   }
   useNowStream.getState().publish(id, streamDetails(stream, addon?.label ?? (isJioSaavnId(id) ? "JioSaavn" : "Stream")));
   jsLog("info", `resolved ${id}: mime=${stream.mime || "?"} itag=${stream.itag ?? "?"} host=${hostOf(stream.url)}`);
+  // Duration forensics: the wire duration AVFoundation reports comes from the container.
+  jsLog(
+    "info",
+    `queue ${id}: metaDuration=${meta.durationMs ?? 0}ms clen=${stream.clen ?? "?"} kbps=${stream.kbps ?? "?"}`,
+  );
   const item = queueItemFor(id, title, stream.url, headers(), expiryOf(stream.url, Date.now()), meta);
   await playerSetQueue([item], 0, positionMs);
   traceMark("player queued");
@@ -246,6 +251,13 @@ function applySnapshot(next: PlayerSnapshot): void {
   if (unrequested) playerPause().catch(report("pause"));
   const reported = unrequested ? { ...next, playing: false } : next;
   const before = last;
+  // Duration/advertising forensics: what the native item reports vs the playhead.
+  if (reported.durationMs !== before.durationMs) {
+    jsLog(
+      "info",
+      `duration ${reported.id ?? "none"}: native=${reported.durationMs}ms position=${reported.positionMs}ms`,
+    );
+  }
   last = reported;
   if (reported.playing) refreshTimes = [];
   for (const type of mediaEventsFor(before, reported)) emit?.(type);
@@ -298,6 +310,10 @@ export function startAndroidEngine(dispatch: (type: MediaEvent | "ended") => voi
   });
   subscribe<unknown>("player-ended", (payload) => {
     const id = payload !== null && typeof payload === "object" ? (payload as { id?: unknown }).id : undefined;
+    jsLog(
+      "info",
+      `ended ${String(id ?? "none")}: position=${last.positionMs}ms nativeDuration=${last.durationMs}ms`,
+    );
     if (id === undefined || id === currentId) dispatch("ended");
   });
   subscribe<PlayerAction>("player-action", (event) => void handlePlayerAction(event.action));

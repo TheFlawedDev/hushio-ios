@@ -10,8 +10,10 @@ import { ContextMenu } from "../components/ContextMenu";
 const bridge = vi.hoisted(() => ({
   platform: "windows",
   downloadCancel: vi.fn(),
+  downloadDeleteFile: vi.fn(async () => undefined),
   downloadQueue: vi.fn(),
   downloadStart: vi.fn(),
+  jsLog: vi.fn(),
   listenDownloadEvents: vi.fn(),
   openFolder: vi.fn(),
   persistRead: vi.fn(async () => null),
@@ -122,8 +124,8 @@ describe("Downloads view states", () => {
 
     expect(playQueue).toHaveBeenCalledWith(
       [
-        { id: "a", title: "Alpha", artist: "Alpha artist", thumb: null },
-        { id: "b", title: "Bravo", artist: "Bravo artist", thumb: null },
+        { id: "a", title: "Alpha", artist: "Alpha artist", thumb: null, album: undefined, duration: 200 },
+        { id: "b", title: "Bravo", artist: "Bravo artist", thumb: null, album: undefined, duration: 200 },
       ],
       1,
       "__downloads__",
@@ -186,7 +188,7 @@ describe("Downloads row actions", () => {
     render(<DownloadsView />);
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole("button", { name: "Remove from list" }));
+    await user.click(screen.getByRole("button", { name: "Remove download" }));
 
     expect(useLibrary.getState().downloads).toEqual({});
   });
@@ -195,7 +197,7 @@ describe("Downloads row actions", () => {
     seed([row("b", "Bravo", "downloading")]);
     render(<DownloadsView />);
 
-    expect(screen.queryByRole("button", { name: "Remove from list" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Remove download" })).toBeNull();
   });
 
   it("opens the downloads folder from the hero menu", async () => {
@@ -218,7 +220,7 @@ describe("Downloads row menu", () => {
     fireEvent.contextMenu(rowFor("Alpha"));
 
     const labels = useUI.getState().contextMenu?.items.filter((entry) => !entry.subject).map((entry) => entry.label);
-    expect(labels).toEqual(["Show in folder", "Remove from list"]);
+    expect(labels).toEqual(["Show in folder", "Remove download"]);
   });
 
   it("offers retry for a failed song and cancel for a running one", () => {

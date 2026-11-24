@@ -29,6 +29,7 @@ const bridge = vi.hoisted(() => ({
   downloadQueue: vi.fn(),
   downloadStart: vi.fn(),
   listenDownloadEvents: vi.fn(),
+  jsLog: vi.fn(),
   openFolder: vi.fn(),
   persistRead: vi.fn(async () => null),
   persistWrite: vi.fn(async () => true),
@@ -558,7 +559,7 @@ describe("downloadMenuItems", () => {
   it("offers retry and remove for a failed song", () => {
     const items = downloadMenuItems(item({ status: "failed" }));
 
-    expect(labels(items)).toEqual(["Retry download", "Remove from list"]);
+    expect(labels(items)).toEqual(["Retry download", "Remove download"]);
     expect(items.every((entry) => !entry.disabled)).toBe(true);
   });
 
@@ -570,7 +571,7 @@ describe("downloadMenuItems", () => {
   it("offers show in folder and remove for a saved song", () => {
     const items = downloadMenuItems(item({ status: "done", path: "/a.m4a" }));
 
-    expect(labels(items)).toEqual(["Show in folder", "Remove from list"]);
+    expect(labels(items)).toEqual(["Show in folder", "Remove download"]);
     const subject = items.find((entry) => entry.subject)?.subject;
     expect(subject).toEqual({ title: "Song", subtitle: "Artist", thumb: null });
   });
@@ -582,7 +583,7 @@ describe("downloadMenuItems", () => {
 
     seed("abc123", item({ status: "done", path: "/a.m4a" }));
     downloadMenuItems(useLibrary.getState().downloads.abc123)
-      .find((entry) => entry.label === "Remove from list")
+      .find((entry) => entry.label === "Remove download")
       ?.onSelect?.();
     expect(useLibrary.getState().downloads.abc123).toBeUndefined();
   });

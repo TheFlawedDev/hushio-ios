@@ -3,6 +3,7 @@ import {
   downloadCancel,
   downloadQueue,
   downloadStart,
+  jsLog,
   listenDownloadEvents,
   openFolder,
   downloadDeleteFile,
@@ -104,9 +105,15 @@ async function queue(source: DownloadSource, dir?: string, expired?: SentStream)
     const stream = await resolveStream(source.id, true, QUALITY_KBPS[downloadQuality], true);
     const resume = expired?.itag !== undefined && expired.itag === stream.itag && expired.clen === stream.clen;
     sent.set(source.id, { dir: target, itag: stream.itag, clen: stream.clen });
+    // Message-only diagnostics (no signed URL): the exact values the native side was handed.
+    jsLog(
+      "info",
+      `download ${source.id}: quality=${downloadQuality} itag=${stream.itag ?? "?"} clen=${stream.clen ?? "?"} dir=${target ?? "default"} export=${exportDownloads}`,
+    );
     await downloadStart(track, stream.url, target, exportDownloads, resume);
   } catch (error) {
     patch(source.id, { status: "failed", progress: 0 });
+    jsLog("warn", `download ${source.id} failed: ${describe(error)}`);
     notify(`Download failed: ${describe(error)}`, "error", source.thumb);
   }
 }
@@ -212,6 +219,7 @@ export function handleDownloadEvent(event: DownloadEvent): void {
       if (retried.has(id)) {
         retried.delete(id);
         patch(id, { status: "failed", progress: 0 });
+        jsLog("warn", `download ${id} expired twice: ${EXPIRED_MESSAGE}`);
         notify(`Download failed: ${EXPIRED_MESSAGE}`, "error");
         return;
       }
@@ -224,6 +232,7 @@ export function handleDownloadEvent(event: DownloadEvent): void {
       progress.discard(id);
       retried.delete(id);
       patch(id, { status: "failed", progress: 0 });
+      jsLog("warn", `download ${id} failed: ${event.reason ?? "unknown error"}`);
       notify(`Download failed: ${event.reason ?? "unknown error"}`, "error");
       return;
     case "cancelled":
@@ -354,7 +363,7 @@ export function downloadMenuItems(item: DownloadItem): MenuItem[] {
   }
   if (!busy) {
     items.push({
-      label: "Remove from list",
+      label: "Remove download",
       icon: X,
       danger: true,
       separatorBefore: items.length > 0,

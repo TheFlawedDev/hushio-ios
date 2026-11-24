@@ -248,6 +248,7 @@ impl<S: EventSink> Downloads<S> {
         self.inner
             .sink
             .emit(DownloadEvent::new(EventKind::Queued, &track.id));
+        tracing::info!(id = %track.id, dir = %dir.display(), "download queued");
         let inner = Arc::clone(&self.inner);
         let request = Request {
             track,
@@ -390,6 +391,13 @@ impl<S: EventSink> Inner<S> {
             .send();
         let mut response =
             until_cancelled(&request.token, stalled(self.policy.stall, head)).await?;
+        tracing::info!(
+            id = %request.track.id,
+            status = response.status().as_u16(),
+            content_length = response.content_length().unwrap_or(0),
+            from,
+            "download response"
+        );
         if matches!(response.status(), StatusCode::FORBIDDEN | StatusCode::GONE) {
             return Err(Failure::Expired);
         }
@@ -484,6 +492,7 @@ impl<S: EventSink> Inner<S> {
             return Ok(PathBuf::from(uri));
         }
         let dest = claim_name(&request.dir, &stem, extension)?;
+        tracing::info!(id = %request.track.id, dest = %dest.display(), "download finishing");
         if let Err(error) = tokio::fs::rename(&request.part, &dest).await {
             remove_file_logged(&dest);
             return Err(error.into());

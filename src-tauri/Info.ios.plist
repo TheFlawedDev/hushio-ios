@@ -13,6 +13,10 @@
                                     and the app's own `hushio` scheme.
   - LSSupportsOpeningDocumentsInPlace -> silences the Xcode warning and lets the document
                                     picker hand out security-scoped folder URLs in place.
+  - UIFileSharingEnabled         -> downloads are written to `<sandbox>/Documents/Hushio`
+                                    (the container root is not writable on iOS), so the
+                                    Files app must be able to show that directory; without
+                                    this key the user cannot reach a finished download.
 -->
 <plist version="1.0">
 <dict>
@@ -22,6 +26,9 @@
 	</array>
 
 	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
+
+	<key>UIFileSharingEnabled</key>
 	<true/>
 
 	<!--

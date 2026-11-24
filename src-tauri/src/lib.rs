@@ -700,29 +700,90 @@ fn js_log(app: tauri::AppHandle, level: String, message: String) {
 /// long session cannot fill the container. Never contains credentials by contract (callers
 /// log hosts and error codes only).
 fn append_diag_line(app: &tauri::AppHandle, level: &str, message: &str) {
-    const LIMIT: u64 = 256 * 1024;
     let Ok(dir) = app.path().app_data_dir() else { return };
-    let _ = std::fs::create_dir_all(&dir);
-    let path = dir.join("diag.log");
-    if std::fs::metadata(&path).map(|m| m.len() > LIMIT).unwrap_or(false) {
-        let _ = std::fs::remove_file(&path);
+    append_diag_text(&dir.join("diag.log"), level, message);
+}
+
+const DIAG_LIMIT: u64 = 256 * 1024;
+
+fn append_diag_text(path: &std::path::Path, level: &str, message: &str) {
+    if let Some(parent) = path.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    if std::fs::metadata(path).map(|m| m.len() > DIAG_LIMIT).unwrap_or(false) {
+        let _ = std::fs::remove_file(path);
     }
     let stamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_millis())
         .unwrap_or(0);
-    if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open(&path) {
+    if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open(path) {
         use std::io::Write;
         let _ = writeln!(file, "{stamp} {level} {message}");
     }
 }
 
+/// Rust-side twin of the `js_log` sink: every `tracing` event is echoed into the same
+/// `diag.log`, because a release iOS build has no reachable stdout and `devicectl
+/// --console` only sees a launch it started itself. Rust warnings (download failures,
+/// bridge timeouts) were previously invisible on a device.
+///
+/// The path is unknown until `setup` resolves the data root, so lines before that go to
+/// stderr only. Writes are line-buffered so a `tracing` field set cannot interleave with
+/// another thread's event mid-line.
+#[cfg(mobile)]
+static DIAG_FILE: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
+#[cfg(mobile)]
+static DIAG_PENDING: std::sync::Mutex<String> = std::sync::Mutex::new(String::new());
+
+#[cfg(mobile)]
+fn set_diag_file(path: PathBuf) {
+    let _ = DIAG_FILE.set(path);
+}
+
+#[cfg(mobile)]
+struct DiagEcho;
+
+#[cfg(mobile)]
+impl std::io::Write for DiagEcho {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        let _ = std::io::stderr().write_all(buf);
+        let Some(path) = DIAG_FILE.get() else { return Ok(buf.len()) };
+        let Ok(mut pending) = DIAG_PENDING.lock() else { return Ok(buf.len()) };
+        pending.push_str(&String::from_utf8_lossy(buf));
+        while let Some(end) = pending.find('\n') {
+            let line: String = pending.drain(..=end).collect();
+            let line = line.trim_end_matches('\n');
+            if !line.is_empty() {
+                append_diag_text(path, "rust", line);
+            }
+        }
+        if pending.len() > 8 * 1024 {
+            pending.clear();
+        }
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        let _ = std::io::stdout().flush();
+        Ok(())
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tracing_subscriber::fmt()
+    #[cfg(mobile)]
+    let subscriber = tracing_subscriber::fmt()
+        .with_ansi(false)
         .event_format(LogPrefix)
         .with_max_level(tracing::Level::INFO)
-        .init();
+        .with_writer(|| DiagEcho);
+    #[cfg(not(mobile))]
+    let subscriber = tracing_subscriber::fmt()
+        .event_format(LogPrefix)
+        .with_max_level(tracing::Level::INFO);
+    subscriber.init();
+
     install_panic_hook();
     #[cfg(desktop)]
     media_controls::set_app_id();
@@ -785,8 +846,21 @@ pub fn run() {
             #[cfg(desktop)]
             app.manage(playback::Engine::new(app.handle().clone()));
             let root = prepare_data_dir(app.handle())?;
+            // From here on, Rust tracing also lands in `diag.log` (see `DiagEcho`).
+            #[cfg(mobile)]
+            set_diag_file(root.join("diag.log"));
+            // Download destination.
+            //
+            // iOS note: `PathResolver::download_dir()` resolves through `dirs`, which uses
+            // the macOS layout on iOS (`$HOME/Downloads`). The app sandbox does not allow
+            // creating entries in the container root, so every download failed with
+            // `Operation not permitted (os error 1)` before a byte was fetched (observed on
+            // the device). `Documents` is inside the writable sandbox and is the location a
+            // user can reach through the Files app, so it is the right target there.
             let default_dir = if cfg!(target_os = "android") {
                 app.path().app_cache_dir()?.join(format!("{APP_SLUG}-downloads"))
+            } else if cfg!(target_os = "ios") {
+                app.path().document_dir()?.join(APP_NAME)
             } else {
                 app.path().download_dir()?.join(APP_NAME)
             };
@@ -800,7 +874,17 @@ pub fn run() {
                     }
                 });
             }
-            let export_dir = app.path().audio_dir().ok().map(|dir| dir.join(APP_NAME));
+            // Same `dirs` mismatch as the download directory above: `audio_dir()` is
+            // `$HOME/Music` on iOS and cannot be written from the sandbox. Export lands in
+            // `Documents/Music` there instead (visible in the Files app).
+            let export_dir = if cfg!(target_os = "ios") {
+                app.path()
+                    .document_dir()
+                    .ok()
+                    .map(|dir| dir.join(APP_NAME).join("Music"))
+            } else {
+                app.path().audio_dir().ok().map(|dir| dir.join(APP_NAME))
+            };
             let folders = tauri::async_runtime::block_on(reveal::Folders::open(
                 &root,
                 default_dir.clone(),
@@ -1121,11 +1205,23 @@ fn notification_settings() -> Result<(), String> {
 }
 
 #[tauri::command]
-fn download_delete_file(path: String) -> Result<(), String> {
+fn download_delete_file(
+    folders: State<'_, reveal::Folders>,
+    path: String,
+) -> Result<(), String> {
     if path.starts_with("content://") {
-        android::media_delete(&path)
-    } else {
-        Ok(())
+        return android::media_delete(&path);
+    }
+    // Deleting a download means deleting the file the app wrote, and this branch used to
+    // return `Ok(())` without touching the disk (the file stayed behind while the entry
+    // disappeared from the list — observed on iOS). Keep it narrow: only a path inside a
+    // folder the app is already allowed to write to may be removed, so a stale or
+    // tampered record cannot delete an arbitrary file.
+    folders.check(Path::new(&path))?;
+    match std::fs::remove_file(&path) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(error.to_string()),
     }
 }
 

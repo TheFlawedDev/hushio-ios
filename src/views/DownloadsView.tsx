@@ -14,6 +14,7 @@ import {
   cancelDownload,
   downloadMenuItems,
   openDownloadFolder,
+  removeDownload,
   revealDownload,
   startDownload,
 } from "../lib/downloads";
@@ -39,12 +40,11 @@ function byTitle(a: DownloadItem, b: DownloadItem): number {
 }
 
 function asTrack(item: DownloadItem): Track {
-  return {
-    id: item.track.id,
-    title: item.track.title,
-    artist: item.track.artist,
-    thumb: item.track.thumb ?? null,
-  };
+  const { id, title, artist, thumb, album, duration } = item.track;
+  // `duration` and `album` are metadata the player already shows elsewhere; dropping them
+  // made a downloaded track play without a known length (the native engine then falls back
+  // to the container, which is inflated for these fragmented streams).
+  return { id, title, artist, thumb: thumb ?? null, album, duration };
 }
 
 function percent(item: DownloadItem): number {
@@ -258,10 +258,10 @@ function DownloadRow({ item, onPlay, selected = false, onSelectClick, onContextS
         {shown && !phone && <IconButton label="Show in folder" icon={FolderOpen} onClick={() => revealDownload(shown)} />}
         {!busy && (
           <IconButton
-            label="Remove from list"
+            label="Remove download"
             icon={X}
             danger
-            onClick={() => useLibrary.getState().removeDownload(item.track.id)}
+            onClick={() => removeDownload(item.track.id)}
           />
         )}
       </span>
