@@ -1686,6 +1686,12 @@ final class HushioResourceLoader: NSObject, AVAssetResourceLoaderDelegate {
             return
         }
 
+        // A request that only asks for content information (no dataRequest) must be
+        // completed as soon as the headers are known. Leaving it to the task completion
+        // handler would not answer AVFoundation until the *entire* body had downloaded,
+        // which stalls the item until its load timeout and surfaces as
+        // `player-error av_AVFoundationErrorDomain_-11800` (observed as "Couldn't play").
+        var contentInfoOnly = false
         if let information = pending.request.contentInformationRequest {
             information.isByteRangeAccessSupported = true
             if let mime = http.mimeType {
@@ -1694,6 +1700,7 @@ final class HushioResourceLoader: NSObject, AVAssetResourceLoaderDelegate {
             if let total = HushioResourceLoader.totalLength(from: http) {
                 information.contentLength = total
             }
+            contentInfoOnly = pending.request.dataRequest == nil
         }
 
         // A server that ignored the Range header answers 200 from byte zero. Drop the
@@ -1704,6 +1711,14 @@ final class HushioResourceLoader: NSObject, AVAssetResourceLoaderDelegate {
         }
         pendingByRequest[key] = pending
         lock.unlock()
+
+        if contentInfoOnly {
+            // Answer the probe now and stop the transfer: nothing consumes its body.
+            pending.request.finishLoading()
+            discard(key: key)
+            completionHandler(.cancel)
+            return
+        }
         completionHandler(.allow)
     }
 
