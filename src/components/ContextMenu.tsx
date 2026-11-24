@@ -255,6 +255,7 @@ const MenuPanel = forwardRef<HTMLDivElement, PanelProps>(function MenuPanel(
               data-danger={item.danger ? "true" : undefined}
               data-has-children={item.children ? "true" : undefined}
               disabled={item.disabled}
+              aria-disabled={item.disabled ? "true" : undefined}
               onPointerEnter={(event) => {
                 shine(event.currentTarget);
                 onRowEnter(index, event.currentTarget);

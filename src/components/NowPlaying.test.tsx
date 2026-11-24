@@ -5,7 +5,7 @@ import { ListPlus } from "@phosphor-icons/react";
 const { lyricsGet, setFullScreen, platformState, watchWindowMaximized } = vi.hoisted(() => ({
   lyricsGet: vi.fn(),
   setFullScreen: vi.fn(),
-  platformState: { value: "windows" as "windows" | "macos" | "linux" | "android" },
+  platformState: { value: "windows" as "windows" | "macos" | "linux" | "android" | "ios" },
   watchWindowMaximized: vi.fn(async () => () => {}),
 }));
 
@@ -231,9 +231,40 @@ describe("NowPlaying", () => {
     expect(heart.getAttribute("aria-pressed")).toBe("false");
     fireEvent.click(heart);
     expect(useLibrary.getState().liked.map((item) => item.id)).toEqual([track.id]);
-    const liked = within(screen.getByRole("group", { name: "Transport" })).getByRole("button", { name: "Remove from Library" });
+    const liked = within(screen.getByRole("group", { name: "Transport" })).getByRole("button", { name: "Add to Library" });
     expect(liked.getAttribute("aria-pressed")).toBe("true");
+    expect(liked.getAttribute("aria-label")).toBe("Add to Library");
     expect(liked.className).toContain("[&_path]:fill-current");
+  });
+
+  it("keeps a static accessible label for the heart toggle button to avoid contradictory VoiceOver announcements", () => {
+    render(<NowPlaying />);
+    openView();
+    const controls = within(screen.getByRole("group", { name: "Transport" }));
+    const heart = controls.getByRole("button", { name: "Add to Library" });
+    expect(heart.getAttribute("aria-label")).toBe("Add to Library");
+    expect(heart.getAttribute("aria-pressed")).toBe("false");
+
+    fireEvent.click(heart);
+    expect(heart.getAttribute("aria-label")).toBe("Add to Library");
+    expect(heart.getAttribute("aria-pressed")).toBe("true");
+
+    fireEvent.click(heart);
+    expect(heart.getAttribute("aria-label")).toBe("Add to Library");
+    expect(heart.getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("hides dead Cast control on iOS while keeping it on Android", () => {
+    platformState.value = "ios";
+    const { unmount } = render(<NowPlaying />);
+    openView();
+    expect(screen.queryByRole("button", { name: "Cast" })).toBeNull();
+    unmount();
+
+    platformState.value = "android";
+    render(<NowPlaying />);
+    openView();
+    expect(screen.getByRole("button", { name: "Cast" })).toBeTruthy();
   });
 
   it("gives the exit chevron the 40px squircle shape of the search and tabs", () => {

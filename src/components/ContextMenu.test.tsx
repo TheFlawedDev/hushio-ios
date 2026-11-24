@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { ContextMenu, openMenuAtPointer, openMenuFromKey, type MenuSource } from "./ContextMenu";
 import { useUI, type MenuItem } from "../stores/ui";
 import { FLOAT_PANEL } from "../lib/floatStyle";
+import { fs, SRC_DIR } from "../lib/testFiles";
 
 const initialUI = useUI.getState();
 
@@ -138,6 +139,7 @@ describe("ContextMenu rows", () => {
 
     const locked = screen.getByRole("menuitem", { name: "Locked" });
     expect((locked as HTMLButtonElement).disabled).toBe(true);
+    expect(locked.getAttribute("aria-disabled")).toBe("true");
     await user.click(locked);
 
     expect(screen.getByRole("menu")).toBeTruthy();
@@ -373,5 +375,14 @@ describe("ContextMenu attached (goo) mode", () => {
 
     const menu = await screen.findByRole("menu");
     expect(menu.querySelector("[data-goo-layer]")).toBeNull();
+  });
+});
+
+describe("hit targets: platform scaling", () => {
+  it("defines --hit-min: 44px on iOS per Apple HIG §2.5.8 while preserving 40px desktop and 48px Android", () => {
+    const css = fs.readFileSync(`${SRC_DIR}index.css`, "utf8");
+    expect(css).toContain(":root {\n  --hit-min: 40px;");
+    expect(css).toContain(":root.platform-ios {\n  /* Apple Human Interface Guidelines §2.5.8 specify a minimum interactive target size of 44x44 pt. */\n  --hit-min: 44px;\n}");
+    expect(css).toContain(":root.platform-android {\n  --hit-min: 48px;\n}");
   });
 });

@@ -415,7 +415,7 @@ function NowPlayingView({ exiting, hintVisible }: { exiting: boolean; hintVisibl
                   <div role="group" aria-label="Transport" className={`mt-4 flex w-full items-center justify-between ${chrome} ${chromeMotion}`}>
                     <div className="-ml-[10px] flex shrink-0 items-center">
                       <TransportButton
-                        label={liked ? "Remove from Library" : "Add to Library"}
+                        label="Add to Library"
                         icon={Heart}
                         active={liked}
                         dot={false}

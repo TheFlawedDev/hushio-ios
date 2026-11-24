@@ -40,6 +40,7 @@ export function ActionMenu({
       aria-haspopup="menu"
       aria-expanded={open}
       disabled={disabled}
+      aria-disabled={disabled ? "true" : undefined}
       onPointerDown={(event) => {
         if (open) event.stopPropagation();
       }}

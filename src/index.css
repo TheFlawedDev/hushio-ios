@@ -217,6 +217,11 @@ textarea:focus-visible {
   --lyric-scale: 1;
 }
 
+:root.platform-ios {
+  /* Apple Human Interface Guidelines §2.5.8 specify a minimum interactive target size of 44x44 pt. */
+  --hit-min: 44px;
+}
+
 :root.platform-android {
   --hit-min: 48px;
 }

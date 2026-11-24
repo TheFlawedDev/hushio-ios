@@ -67,9 +67,40 @@ describe("ActionMenu", () => {
     await user.click(screen.getByRole("button", { name: "More options" }));
     const locked = screen.getByRole("menuitem", { name: "Locked" });
     expect((locked as HTMLButtonElement).disabled).toBe(true);
+    expect(locked.getAttribute("aria-disabled")).toBe("true");
     await user.click(locked);
 
     expect(screen.getByRole("menu")).toBeTruthy();
+  });
+
+  it("exposes aria-disabled on disabled action menu trigger", () => {
+    render(<ActionMenu label="More options" disabled items={[]} />);
+    const trigger = screen.getByRole("button", { name: "More options" });
+    expect((trigger as HTMLButtonElement).disabled).toBe(true);
+    expect(trigger.getAttribute("aria-disabled")).toBe("true");
+  });
+
+  it("renders checkable menu items with role and aria-checked semantics", async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <ActionMenu
+          label="Options"
+          items={[
+            { label: "Shuffle", toggle: true, checked: true, onSelect: vi.fn() },
+            { label: "Repeat", toggle: true, checked: false, onSelect: vi.fn() },
+          ]}
+        />
+        <ContextMenu />
+      </>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Options" }));
+
+    const shuffle = screen.getByRole("menuitemcheckbox", { name: "Shuffle" });
+    const repeat = screen.getByRole("menuitemcheckbox", { name: "Repeat" });
+    expect(shuffle.getAttribute("aria-checked")).toBe("true");
+    expect(repeat.getAttribute("aria-checked")).toBe("false");
   });
 
   it("closes when its trigger is pressed again", async () => {
