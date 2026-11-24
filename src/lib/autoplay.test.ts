@@ -108,7 +108,14 @@ describe("pickSuggestions", () => {
 
   it("returns only the track fields", () => {
     const [pick] = pickSuggestions([item(1, { duration: 120, explicit: true })], options());
-    expect(pick).toEqual({ id: vid(1), title: "Song 1", artist: "Artist 1", thumb: `https://img.example/1.jpg` });
+    // `duration` is kept: without it the player cannot know the real song length.
+    expect(pick).toEqual({
+      id: vid(1),
+      title: "Song 1",
+      artist: "Artist 1",
+      thumb: `https://img.example/1.jpg`,
+      duration: 120,
+    });
   });
 
   it("keeps one copy of a recording that appears as an official video and as the song", () => {

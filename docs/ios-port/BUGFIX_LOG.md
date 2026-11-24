@@ -32,6 +32,8 @@ not have.
 | B3 | Sync retry silently did nothing | `BGTaskSchedulerPermittedIdentifiers` was absent (submit would reject forever) and no launch handler was registered (the OS kills the app when such a task fires) | Identifier added to `Info.ios.plist`; handler registered once in `HushioSyncPlugin.load`; `schedule` rejects `bg_task_not_registered` when the OS refuses, and the handler completes the task as **failed** rather than pretending the Rust queue ran | `29fbae9` |
 | B4 | Opening an audio file from Files did nothing on iOS | iOS needs security-scoped bookmarks; the shared launcher only handled Android | `adopt_launch_file` selector returns a durable bookmark reference; `launch.ts` routes it | `df8ecf4` |
 | B5 | `hushio://` links had no effect | The scheme was in the plist but nothing subscribed to the plugin's event | `plugins.deep-link.mobile` in `tauri.ios.conf.json`; `launch.ts` consumes `deep-link://new-url` | `ba0fa02` |
+| B6 | Every download failed with *"Download failed: Operation not permitted (os error 1)"* and no file appeared anywhere | `PathResolver::download_dir()` resolves through `dirs`, which uses the **macOS layout on iOS** (`$HOME/Downloads`). The app sandbox does not allow creating entries in the container root, so `create_dir_all` was refused before a byte was fetched | iOS downloads to `Documents/Hushio` instead (inside the writable sandbox); the export folder moved to `Documents/Hushio/Music` for the same reason, and `UIFileSharingEnabled` was added so the Files app can actually see finished downloads | same commit as this row |
+| B7 | Removing a download removed the list entry but left the file on disk | `download_delete_file` returned `Ok(())` without touching the filesystem for any non-`content://` path (the baseline defect recorded as D09; Android only ever deleted through MediaStore) | It now deletes the file, but only after `Folders::check` proves the path is inside a folder the app may write to, so a stale or tampered record cannot delete an arbitrary file. `NotFound` is success. The Downloads view's row action now goes through `downloads.ts::removeDownload` (it used to call the store directly and never ask for the file to be deleted) | same commit as this row |
 
 ## C. Playback (device-only failures)
 
@@ -46,6 +48,20 @@ not have.
 
 The same `diag.log` line proved resolution itself is healthy on the device:
 `resolved SwYN7mTi6HM: mime=audio/mp4; codecs="mp4a.40.2" itag=140 host=rr2---sn-…googlevideo.com`.
+
+## C-bis. First playback that actually worked on the phone: three defects it exposed
+
+With C6 in place, audio played on the device — and the timeline was wrong, downloads still
+failed, and deleting a download left the file behind. None of the three was a codec or
+network problem; all three were found from `diag.log` plus the same stream bytes on a Mac.
+
+| # | Symptom | Root cause | Fix |
+|---|---|---|---|
+| C7 | Scrubber showed **twice** the real length (221.5 s for a 110.8 s track, 353.9 s for a 177 s one). Dragging into the second half played nothing, and a song that finished sat in silence instead of advancing | The stream CDN serves audio as a **fragmented MP4 whose `moov` still carries a non-zero `mvhd` duration *and* a matching `sidx`/`moof` fragment table**. ISO-BMFF requires `mvhd.duration == 0` for a fragmented movie; AVFoundation instead **sums** the two, so `AVPlayerItem.duration` came out at ~2x. Reproduced on macOS with the exact bytes (`AVURLAsset` 221.53 s vs `AVAssetReader`/ffprobe 110.72 s) — the extra half of the timeline is empty: AVPlayer keeps "playing" silence at a 1:1 playhead and never posts `didPlayToEndTime`, so the queue never advanced | The engine reports, in order: an end it actually observed, the catalog duration the UI already shows when the container looks inflated (> 25 % longer), otherwise `AVPlayerItem.duration`. When the resolved length is shorter than the transport's, it also sets `AVPlayerItem.forwardPlaybackEndTime` (measured on macOS: stops at the limit and posts the ordinary end notification), so the track ends and the shared engine advances exactly once, at the right time |
+| C8 | After downloading a song, the same song showed the doubled length again — but only when played from the Downloads view | `DownloadsView::asTrack` rebuilt the row's `Track` from `{id,title,artist,thumb}` only, dropping `duration` (and `album`). The player therefore had no catalog length and fell back to the inflated container number from C7 | `asTrack` keeps `duration` and `album`. Note the deeper gap: on mobile the engine still resolves a *network* stream even for a downloaded track (no queue item is built from the saved file), so "downloads" are not yet offline playback — recorded in `PARITY_MATRIX.md` |
+| C9 | `diag.log` had no Rust-side lines, so a native failure (B6) was only visible as a toast | Only `js_log` and the Swift `HushioDiag` sink appended to the file; `tracing` went to a stdout that a release build on a phone never has | The mobile subscriber now echoes every `tracing` event into the same `diag.log` (line-buffered, same 256 KiB cap), so download/bridge/engine warnings land there without `devicectl --console` attached |
+| C10 | After C7 the length was right for songs started from a list and still 2x for the songs that arrived by **autoplay**: a run of consecutive `metaDuration=0ms` queue lines in `diag.log` | `autoplay.ts::pickSuggestions` mapped its picks to `{id,title,artist,thumb}` — deliberately dropping `duration` (and `homePicks` forced `duration: 0`). Autoplay/radio tracks therefore reached the player with no catalog length, so C7 had nothing to correct against. Charts (`charts.ts`) and timestamp-less playlist imports have the same hole and cannot be filled at the source | `pickSuggestions` keeps `duration` (and `homePicks` keeps whatever the home feed supplied), so the queue finally carries a length for autoplay tracks too |
+| C11 | Even with C10, any track whose catalog length is unknown kept the doubled timeline — and because AVFoundation never posts an end event there, the song sat in **silence for its whole remaining half** instead of advancing to the next track | No public AVFoundation API exposes the un-doubled duration (`asset.duration`, `track.timeRange`, `seekableTimeRanges` are all doubled), but the file states it plainly in `mvhd` (and `mehd` for fragmented files) | `ContainerDuration` reads the first 64 KB of the media (local file or one ranged request) and parses `mvhd`/`mehd`. It runs only when the catalog has no length and there is a transport value to compare with, and its answer is applied only when it is shorter than AVFoundation's. Verified against the real stream bytes on a Mac: 110 769 ms (ffprobe: 110.769 s) where AVFoundation says 221 527 ms |
 
 ## D. Accessibility and iOS honesty (found by audit, fixed with tests)
 
@@ -69,9 +85,21 @@ drive virtualised row measurement and need design + device validation
 
 ## Known outstanding at this commit
 
-- **Playback on the device is not yet confirmed working.** C2–C6 are all real defects that were
-  fixed, and each fix removed one layer of the failure, but the last one (camelCase selectors)
-  still needs one device run to confirm audio. Nothing in this log claims otherwise.
+- **Playback on the device is confirmed working** (audio, transport, seek, natural end and
+  queue advance) as of the run that produced C7–C9. Background audio, interruptions, route
+  changes, remote commands and the service bridges still need the device checklist.
+- **Tracks with no catalog duration** (charts, timestamp-less imports) are covered by the
+  container probe in C11: `mvhd` is read from the media itself, so the scrubber and the end of
+  the track are right without catalog metadata. The probe cannot help an HLS source or a file
+  whose `moov` sits outside the first 64 KB; those keep AVFoundation's value.
+- **A downloaded file is itself a fragmented MP4 with the spec-violating `mvhd`.** Nothing
+  rewrites it, so an external player that trusts `mvhd` will show the same doubled length.
+  The app's own playback is corrected in the engine (C7/C8).
+- **iOS container paths are not stable across reinstalls.** `downloads[id].path` is an
+  absolute path, and the data container UUID changes when the app is reinstalled, so older
+  download records point at a directory that no longer exists (deleting them reports "Path is
+  not in an approved folder"). Re-downloading fixes the record; storing container-relative
+  paths is the proper fix.
 - Device-dependent verification (`DEVICE_VERIFICATION.md` steps 2–7): background audio,
   interruption/route changes, remote commands, services on hardware, OAuth (needs client IDs),
   Dynamic Type/VoiceOver.

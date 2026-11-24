@@ -186,7 +186,26 @@ public final class PlayerEngine {
     private var baseVolume: Double = 1
     /// Decoded duration in ms; 0 = unknown. `AVPlayerItem.duration` is not readable
     /// before `.readyToPlay`, so it is sampled on status changes and on the tick.
+    ///
+    /// FRAGMENTED CONTAINERS: the stream CDN serves audio as a fragmented MP4 whose
+    /// `moov` still carries a non-zero `mvhd` duration *and* a `sidx`/`moof` fragment
+    /// table of the same length. ISO-BMFF requires `mvhd.duration == 0` for a fragmented
+    /// movie; AVFoundation instead **sums** the two, so `item.duration` comes out at
+    /// roughly twice the real length (measured on device: 221.5 s reported for a 110.8 s
+    /// track, and 353.9 s for a 177 s one). `AVAssetReader` decodes the honest 110.7 s of
+    /// audio, so the extra half of the timeline is empty: the scrubber extends past the
+    /// end of the song. `resolvedDurationMs` is what the wire reports, not this raw
+    /// sample.
     private var knownDurationMs: Int64 = 0
+    /// Real end observed when the current item completed (0 = not observed yet). Used
+    /// when neither the catalog nor the container gave a trustworthy length.
+    private var learnedDurationMs: Int64 = 0
+    /// Duration read straight out of the media container (`ContainerDuration`), used when the
+    /// catalog has no length for this track. 0 = not probed / not available.
+    private var probedDurationMs: Int64 = 0
+    /// The `playbackURLString` the probe was started for, so a re-emitted snapshot cannot
+    /// queue the same ranged request twice.
+    private var probedURLString: String?
 
     /// Per-playback-URI header memory, mirroring Kotlin `headersByUrl`. Two purposes:
     /// the resource loader reads headers for the active URI, and `setUrl` can drop the
@@ -427,7 +446,7 @@ public final class PlayerEngine {
         // user's play-after-ended would silently do nothing.
         // UNVERIFIED: the exact Media3 rewind semantics were not extracted; this is the
         // minimal behaviour that avoids a dead control.
-        if knownDurationMs > 0, currentPositionMs() >= knownDurationMs {
+        if resolvedDurationMs > 0, currentPositionMs() >= resolvedDurationMs {
             player.seek(
                 to: CMTime(value: 0, timescale: 1000),
                 toleranceBefore: .zero,
@@ -692,7 +711,7 @@ public final class PlayerEngine {
             playing: playRequested,
             buffering: isBuffering,
             positionMs: currentPositionMs(),
-            durationMs: knownDurationMs,
+            durationMs: resolvedDurationMs,
             index: currentIndex,
             id: item.id,
             speed: desiredRate,
@@ -746,6 +765,9 @@ public final class PlayerEngine {
     /// fresh load keeps AVPlayer's default start (mirrors Media3's
     /// `setMediaItems(..., startPositionMs)` with 0).
     private func loadCurrentItem(seekToMs: Int64) {
+        learnedDurationMs = 0
+        probedDurationMs = 0
+        probedURLString = nil
         guard let item = currentQueueItem() else {
             observedItem = nil
             itemStatusObservation = nil
@@ -800,6 +822,10 @@ public final class PlayerEngine {
         }
 
         let playerItem = AVPlayerItem(asset: asset)
+        HushioDiag.append(
+            "load",
+            "id=\(item.id) host=\(url.host ?? "file") local=\(url.isFileURL) headers=\(item.headers.isEmpty ? "none" : "replayed") seekTo=\(seekToMs)"
+        )
         // Android requests `PlaybackParameters(speed, 1f)`: pitch unchanged. `.spectral`
         // is the music-quality pitch-preserving algorithm; `.varispeed` would shift pitch.
         playerItem.audioTimePitchAlgorithm = .spectral
@@ -879,6 +905,56 @@ public final class PlayerEngine {
             deadline: .now() + .milliseconds(Int(PlayerEngine.missingURLWaitMs)),
             execute: work
         )
+    }
+
+    /// The duration the wire reports.
+    ///
+    /// 1. An end we actually observed wins: it is the only value measured from the media.
+    /// 2. A container probe (`mvhd`/`mehd`) wins when it disagrees with the transport, which
+    ///    is the case for the fragmented-MP4 double count documented on `knownDurationMs`.
+    /// 3. The catalog duration (the number every list in the UI shows) wins when the
+    ///    container looks inflated. A 25 % margin over the catalog hit that case (2.0x) and
+    ///    never touches a legitimate container/catalog difference of a second or two.
+    /// 4. Otherwise `AVPlayerItem.duration` is exact and is used as is.
+    private var resolvedDurationMs: Int64 {
+        if learnedDurationMs > 0 { return learnedDurationMs }
+        if probedDurationMs > 0, knownDurationMs <= 0 || probedDurationMs + 1_000 < knownDurationMs {
+            return probedDurationMs
+        }
+        let catalog = currentQueueItem()?.durationMs ?? 0
+        if catalog > 0 {
+            let slack = max(3_000, catalog / 4)
+            if knownDurationMs <= 0 || knownDurationMs > catalog + slack { return catalog }
+        }
+        return knownDurationMs
+    }
+
+    /// Measures the real length of a track the catalog knows nothing about.
+    ///
+    /// Only started when `durationMs` is missing *and* there is a transport duration to
+    /// compare against, so the common case costs no extra request. The result is applied only
+    /// if it is shorter than what AVFoundation claims — a longer reading would mean a probe
+    /// hit the wrong box, and the transport value is then left alone.
+    private func probeContainerDuration(for item: PlayerQueueItem, transportMs: Int64) {
+        guard item.durationMs <= 0, transportMs > 0 else { return }
+        guard let url = item.playbackURL else { return }
+        let key = item.playbackURLString ?? url.absoluteString
+        guard probedURLString != key else { return }
+        probedURLString = key
+        let itemId = item.id
+        let headers = item.headers
+        ContainerDuration.read(url: url, headers: headers) { [weak self] measured in
+            guard let self, let measured, measured > 0 else { return }
+            guard let current = self.currentQueueItem(), current.id == itemId else { return }
+            guard self.knownDurationMs <= 0 || measured + 1_000 < self.knownDurationMs else { return }
+            self.probedDurationMs = measured
+            HushioDiag.append(
+                "duration",
+                "id=\(itemId) containerProbe=\(measured) transport=\(self.knownDurationMs)"
+            )
+            self.refreshDuration()
+            self.emitSnapshot(force: true)
+        }
     }
 
     private func cancelMissingURLTimeout() {
@@ -1072,6 +1148,25 @@ public final class PlayerEngine {
     private func handleItemEnded(_ item: AVPlayerItem) {
         guard item === observedItem else { return }
         refreshDuration()
+        // Learn the real length: when the container's timeline is longer than the decoded
+        // media (fragmented-MP4 double count), completion arrives early in container
+        // time. Adopting the observed end makes the scrubber honest from then on even
+        // when the catalog has no duration for this item.
+        let endedAt = currentPositionMs()
+        if endedAt > 0, endedAt + 1_000 < resolvedDurationMs {
+            learnedDurationMs = endedAt
+            HushioDiag.append(
+                "duration",
+                "id=\(currentQueueItem()?.id ?? "?") learned=\(endedAt) was=\(resolvedDurationMs)"
+            )
+        }
+        // Duration forensics: the playhead at completion vs the duration AVFoundation
+        // reported. If these disagree, the fetched media is shorter than its container
+        // claims (truncated response / wrong rendition), not a seek bug.
+        HushioDiag.append(
+            "ended",
+            "id=\(currentQueueItem()?.id ?? "?") position=\(currentPositionMs()) duration=\(resolvedDurationMs) itemDuration=\(PlayerEngine.milliseconds(from: item.duration))"
+        )
         // The ended identity is the current queue item's id (native owns a single
         // installed item and never advances). An empty id is reported as nil so the
         // adapter emits `{}` instead of `{id: ""}` (ADR-007 Decision 1).
@@ -1270,7 +1365,45 @@ public final class PlayerEngine {
             knownDurationMs = 0
             return
         }
-        knownDurationMs = PlayerEngine.milliseconds(from: item.duration)
+        let sampled = PlayerEngine.milliseconds(from: item.duration)
+        if sampled != knownDurationMs {
+            HushioDiag.append(
+                "duration",
+                "id=\(currentQueueItem()?.id ?? "?") duration=\(sampled) raw=\(CMTimeGetSeconds(item.duration))"
+            )
+        }
+        knownDurationMs = sampled
+        applyDurationLimit(to: item)
+        if let queued = currentQueueItem() {
+            probeContainerDuration(for: queued, transportMs: sampled)
+        }
+    }
+
+    /// Cuts playback at the real end of the media.
+    ///
+    /// With an inflated (fragmented-container) duration the extra half of the timeline is
+    /// empty: AVPlayer keeps "playing" in silence, never posts
+    /// `didPlayToEndTime`, and the queue therefore never advances — measured on macOS with
+    /// the same stream bytes (150 s of wall clock at a 1:1 playhead with no end event on a
+    /// 110.8 s track). Setting `forwardPlaybackEndTime` to the real length stops playback
+    /// there and posts the ordinary end notification (also measured), so the shared engine
+    /// advances exactly once, at the right time.
+    ///
+    /// Only applied when the resolved duration is genuinely shorter than what AVFoundation
+    /// reports; an honest item keeps its own end time.
+    private func applyDurationLimit(to item: AVPlayerItem) {
+        guard item === observedItem else { return }
+        let resolved = resolvedDurationMs
+        let raw = PlayerEngine.milliseconds(from: item.duration)
+        guard resolved > 0, raw > 0, resolved < raw else { return }
+        let desired = CMTime(value: resolved, timescale: 1000)
+        if item.forwardPlaybackEndTime != desired {
+            item.forwardPlaybackEndTime = desired
+            HushioDiag.append(
+                "duration",
+                "id=\(currentQueueItem()?.id ?? "?") endLimit=\(resolved) transport=\(raw)"
+            )
+        }
     }
 
     // MARK: - Remote command center
@@ -1460,7 +1593,7 @@ public final class PlayerEngine {
     // MARK: - Clamping helpers (PlayerMath parity)
 
     private func clampSeek(_ positionMs: Int64) -> Int64 {
-        let upper = max(0, knownDurationMs)
+        let upper = max(0, resolvedDurationMs)
         return min(max(0, positionMs), upper)
     }
 

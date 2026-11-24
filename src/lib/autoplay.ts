@@ -96,7 +96,11 @@ export function pickSuggestions(candidates: readonly RadioItem[], options: PickO
 
   take(songs);
 
-  return picked.map(({ id, title, artist, thumb }) => ({ id, title, artist, thumb }));
+  // `duration` is what tells the player how long the song really is. These picks used to
+  // drop it, so every autoplay/radio track played with no known length and the native
+  // engine fell back to the container's length — which is inflated for the fragmented
+  // MP4 streams served by the CDN (see docs/ios-port/BUGFIX_LOG.md C7).
+  return picked.map(({ id, title, artist, thumb, duration }) => ({ id, title, artist, thumb, duration }));
 }
 
 async function radioPicks(seedId: string, exclusions: Exclusions, limit: number): Promise<Track[]> {
@@ -114,7 +118,15 @@ async function radioPicks(seedId: string, exclusions: Exclusions, limit: number)
 
 async function homePicks(exclusions: Exclusions, limit: number): Promise<Track[]> {
   const pool = seededShuffle(await homeTracks(), randomSeed());
-  const candidates = pool.map((track) => ({ ...track, artistId: null, duration: 0, explicit: false, videoType: "song" as const }));
+  // Keep whatever length the home feed supplied: a track without one plays with the
+  // container's (inflated) length instead of the real song length.
+  const candidates = pool.map((track) => ({
+    ...track,
+    artistId: null,
+    duration: track.duration ?? 0,
+    explicit: false,
+    videoType: "song" as const,
+  }));
   return pickSuggestions(candidates, { ...exclusions, limit: Math.min(limit, HOME_FALLBACK_MAX), seed: null });
 }
 
