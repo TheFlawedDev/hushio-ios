@@ -682,11 +682,38 @@ fn panic_message(info: &std::panic::PanicHookInfo<'_>) -> String {
 /// Deliberately message-only: callers must never pass credentials, tokens or URLs with
 /// signatures (see the call sites, which log hosts and codes rather than full URLs).
 #[tauri::command]
-fn js_log(level: String, message: String) {
+fn js_log(app: tauri::AppHandle, level: String, message: String) {
     match level.as_str() {
         "error" => tracing::error!(target: "frontend", "{message}"),
         "warn" => tracing::warn!(target: "frontend", "{message}"),
         _ => tracing::info!(target: "frontend", "{message}"),
+    }
+    // Also append to a file in the app data dir: a release iOS build has no reachable
+    // stdout, and 'devicectl --console' only sees output from a launch it started itself.
+    // The file can be pulled at any time with
+    //   xcrun devicectl device copy from --domain-type appDataContainer \
+    //     --domain-identifier <bundle-id> --source Library/Application Support/<id>/diag.log
+    append_diag_line(&app, &level, &message);
+}
+
+/// Best-effort diagnostics file. Bounded: it is truncated when it grows past 256 KiB so a
+/// long session cannot fill the container. Never contains credentials by contract (callers
+/// log hosts and error codes only).
+fn append_diag_line(app: &tauri::AppHandle, level: &str, message: &str) {
+    const LIMIT: u64 = 256 * 1024;
+    let Ok(dir) = app.path().app_data_dir() else { return };
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("diag.log");
+    if std::fs::metadata(&path).map(|m| m.len() > LIMIT).unwrap_or(false) {
+        let _ = std::fs::remove_file(&path);
+    }
+    let stamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis())
+        .unwrap_or(0);
+    if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open(&path) {
+        use std::io::Write;
+        let _ = writeln!(file, "{stamp} {level} {message}");
     }
 }
 
