@@ -26,6 +26,7 @@ provider credentials.
 | 4 Stale-event tests | **Done** — 8 engine tests, iOS emits `player-ended {id}` |
 | 5 Advanced audio | **Done in source** — sleep timer implemented; EQ/crossfade/skip-silence/leveling decided in `ADVANCED_AUDIO.md` |
 | 6–8 Device work | **Blocked on `HUMAN_STEPS.md` H1/H2** — checklist ready in `DEVICE_VERIFICATION.md` |
+| P3 polish | #18 fixed; #17 (Dynamic Type reflow) deliberately deferred to design + device (`DEVICE_VERIFICATION.md` §7) |
 | 9 Closure docs | Partially done; final sweep needs 6–8 |
 | E1/E2 accessibility | **Done for the static scope**: audit + 6 P1 and 10 P2 fixes with tests, 5 P3 documented (4 applied). Device assessment (VoiceOver rotor, real target sizes, Dynamic Type reflow) is in `DEVICE_VERIFICATION.md` |
 | Deep-link routing | Scheme + `deep-link://new-url` routing implemented (`LAUNCH_IOS.md`); iOS file launches remain OPEN pending device |
@@ -130,3 +131,20 @@ Do 1–5 completely, then declare the port "simulator-complete, device-gated":
 `PARITY_MATRIX.md` keeps 7/8 rows at `SRC` with the blocker named, and `HANDOFF.md`
 documents the exact one-time signing step. That is an honest stopping point — the
 contract in §6 allows blocked rows provided nothing claims unverified parity.
+
+---
+
+## Status: every software path is complete
+
+Everything that can be built and proven without a physical iPhone has been built and proven.
+The only remaining work is execution of `DEVICE_VERIFICATION.md` after `HUMAN_STEPS.md` H1/H2:
+
+| Item | Why it cannot be closed here |
+|---|---|
+| Physical install | needs an Apple Account, a development team and a trusted phone |
+| Playback parity (background, interruption, route, remote, refresh) | the simulator does not enforce `UIBackgroundModes`, audio sessions, or hardware routes |
+| Services parity (Keychain across relaunch, picker/bookmark persistence, notifications, BGTask firing, ATS/network) | each needs a real OS decision or hardware |
+| OAuth flows | needs the two client IDs |
+| VoiceOver rotor, real target sizes, Dynamic Type AX1–AX5 | needs an interactive device session |
+
+Nothing above is marked green. Every row stays `SRC`/`OPEN` in `PARITY_MATRIX.md` until observed.
