@@ -54,6 +54,18 @@ EMAIL_RE='[A-Za-z0-9._%+-]+@(gmail|googlemail|icloud|me|mac|outlook|hotmail|live
 # Signing artefacts that must never be committed.
 SECRET_FILE_RE='\.(p12|pfx|cer|key|mobileprovision|provisionprofile)$'
 
+# Credential-shaped strings: Google API keys, OpenAI-style keys, GitHub tokens, Slack tokens,
+# AWS access key ids, and JWTs long enough to be real.
+KEY_RE='(AIza[0-9A-Za-z_-]{35}|gh[pousr]_[A-Za-z0-9]{30,}|sk-[A-Za-z0-9]{32,}|xox[baprs]-[A-Za-z0-9-]{10,}|AKIA[0-9A-Z]{16})'
+
+# Known-public constants that match KEY_RE. Each entry needs a justification, not a shrug:
+#  - src/lib/poToken.ts: Google's public InnerTube web client key, upstream since 4a791f5 and
+#    already public in the original repository. It identifies the client, not a user, and has
+#    no billing or account scope. See docs/ios-port/SECRET_SCAN.md.
+KEY_ALLOWLIST=(
+  "src/lib/poToken.ts"
+)
+
 # Usernames to catch even without a home-directory prefix. Self-adapts to the
 # current machine, plus any names supplied via LEAK_USERNAMES.
 names=()
@@ -100,6 +112,15 @@ while IFS= read -r file; do
   fi
   if printf '%s' "$file" | grep -qE "$SECRET_FILE_RE"; then
     echo "leak: $file is a signing/certificate artefact" >&2
+    fail=1
+  fi
+
+  key_skip=0
+  for allowed in "${KEY_ALLOWLIST[@]}"; do
+    if [[ "$file" == "$allowed" ]]; then key_skip=1; break; fi
+  done
+  if [[ "$key_skip" -eq 0 ]] && grep -q -E -I -- "$KEY_RE" "$file" 2>/dev/null; then
+    echo "leak: $file contains a credential-shaped string (see docs/ios-port/SECRET_SCAN.md)" >&2
     fail=1
   fi
 done <<< "$(git ls-files)"

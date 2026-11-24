@@ -3,7 +3,7 @@ const snapshot = (id: string | null) => ({ playing: false, buffering: false, pos
 // Lets a test pretend to be iOS: androidEngine reads `IOS` as a live binding.
 const platform = vi.hoisted(() => ({ ios: false }));
 const mocks = vi.hoisted(() => ({
-  resolveStream: vi.fn(), playerSetQueue: vi.fn(async (_items: { id: string }[], _index: number, _position: number) => {}), playerPlay: vi.fn(async () => {}),
+  resolveStream: vi.fn(), playerSetQueue: vi.fn(async (_items: { id: string; headers?: Record<string, string> }[], _index: number, _position: number) => {}), playerPlay: vi.fn(async () => {}),
   playerPause: vi.fn(async () => {}), playerSetUrl: vi.fn(async () => {}), localLibraryTrackPath: vi.fn(async () => 'content://song'),
   playerGetState: vi.fn(async () => snapshot(null)),
   toast: vi.fn(),
