@@ -12,25 +12,59 @@ so in the commit message. Never simulate the missing input.
 
 ## H1 — Physical iPhone install (unblocks the biggest block of work)
 
-Needed for: `REMAINING_SEQUENCE.md` steps 6–8 (device install, playback parity, services
-parity), and `BLOCKERS.md` B003 / B016.
+**Status: the code side is finished; one GUI step remains.** Verified state as of this commit:
 
-1. Xcode → Settings → Accounts → add the Apple Account.
-2. Select the development team for the `hushio-desktop_iOS` target, **or** set
-   `bundle.iOS.developmentTeam` in `src-tauri/tauri.ios.conf.json` (or export
-   `APPLE_DEVELOPMENT_TEAM`).
-3. Connect the iPhone by cable, trust this Mac, enable Developer Mode on the phone
-   (Settings → Privacy & Security → Developer Mode), and trust the developer certificate
-   (Settings → General → VPN & Device Management).
-4. Then:
+| Item | State |
+|---|---|
+| Development team | a **free personal team** (`isFreeProvisioningTeam = 1`); the team ID lives in `src-tauri/tauri.ios.conf.json` and is not reproduced here |
+| Config | `bundle.iOS.developmentTeam` in `src-tauri/tauri.ios.conf.json`; Tauri embeds `DEVELOPMENT_TEAM` into the generated Xcode project on build |
+| Signing flags | `tauri ios build` already passes `-allowProvisioningUpdates`; nothing extra to type |
+| Signing certificate | **created** — an `Apple Development` identity is present in the keychain (check with `security find-identity -v -p codesigning`) |
+| Apple ID session | authenticated (the certificate proves the portal call succeeded) |
+| Device | the paired iPhone is visible to `devicectl` but **Xcode reports `available: false`** (no USB, not reachable over the network) and it is **not registered to the team** |
+
+That combination produces exactly this, and nothing else:
+
+```
+error: Communication with Apple failed: Your team has no devices from which to
+generate a provisioning profile. Connect a device to use or manually add device IDs
+in Certificates, Identifiers & Profiles.
+error: No profiles for 'com.hushio.app.iosdev' were found
+```
+
+The certificate exists, so the only thing missing is a **device Xcode can reach**. A free
+team cannot register a device from the command line, and Xcode will not register a device it
+cannot see. So the remaining action is physical, then one command:
+
+1. **Connect the iPhone by cable** (USB attachment currently reads 0), unlock it, and tap
+   *Trust This Computer*. If iOS asks, enable **Developer Mode**
+   (Settings → Privacy & Security → Developer Mode).
+2. Optionally, to keep it working cable-free later: Xcode → **Window → Devices and
+   Simulators** → select the iPhone → tick **Connect via network**.
+3. Confirm the device is visible to Xcode:
    ```sh
-   cd src-tauri
-   pnpm exec tauri ios build -t aarch64
+   ./scripts/ios-signing-check.sh     # "devices Xcode considers available" must be >= 1
+   ```
+4. Build and install — Xcode registers the device and mints the profile on this run:
+   ```sh
+   cd src-tauri && pnpm exec tauri ios build --debug -t aarch64 --ci
+   ```
+   (`-allowProvisioningUpdates` is already passed; expect one keychain prompt — *Always Allow*.)
+5. On the phone: **Settings → General → VPN & Device Management** → trust the developer
+   certificate, if iOS has not already asked.
+6. From then on the same command is what agents should use for every device build:
+   ```sh
+   cd src-tauri && pnpm exec tauri ios build --debug -t aarch64 --ci
    ```
 
-State today: `security find-identity -v -p codesigning` reports 0 identities on this Mac and
-`devicectl` shows no connected phone, so the build stops at
-`Signing for "hushio-desktop_iOS" requires a development team`.
+Free-team consequences to keep in mind: certificates/profiles expire after **7 days**
+(re-run step 4 or the command above to refresh), and only a few apps can be signed at once.
+
+Check the whole picture any time with:
+
+```sh
+./scripts/ios-signing-check.sh
+```
 
 ## H2 — OAuth client IDs (unblocks sign-in verification)
 

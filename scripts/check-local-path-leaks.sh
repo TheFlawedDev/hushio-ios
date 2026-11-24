@@ -46,6 +46,14 @@ ALLOWLIST=(
 # matching relative paths such as "phone/home/homeStream" in prose.
 HOME_RE='(^|[^A-Za-z0-9_])(/Users/|/home/|[Cc]:/[Uu]sers/)'
 
+# Personal email domains. Test fixtures use example.com; a real consumer mail address in a
+# committed file is PII (an Apple ID in a signing note, an author in a script), so it fails
+# like a home path does. Version pins (`pkg@1.2.3`) never match: the domain list decides.
+EMAIL_RE='[A-Za-z0-9._%+-]+@(gmail|googlemail|icloud|me|mac|outlook|hotmail|live|yahoo|proton|protonmail|aol|gmx|zoho)\.(com|me|net|org)'
+
+# Signing artefacts that must never be committed.
+SECRET_FILE_RE='\.(p12|pfx|cer|key|mobileprovision|provisionprofile)$'
+
 # Usernames to catch even without a home-directory prefix. Self-adapts to the
 # current machine, plus any names supplied via LEAK_USERNAMES.
 names=()
@@ -86,6 +94,14 @@ while IFS= read -r file; do
       break
     fi
   done
+  if grep -q -E -I -- "$EMAIL_RE" "$file" 2>/dev/null; then
+    echo "leak: $file contains a personal email address" >&2
+    fail=1
+  fi
+  if printf '%s' "$file" | grep -qE "$SECRET_FILE_RE"; then
+    echo "leak: $file is a signing/certificate artefact" >&2
+    fail=1
+  fi
 done <<< "$(git ls-files)"
 
 if [[ "$fail" -ne 0 ]]; then

@@ -3,7 +3,8 @@
   "identifier": "com.hushio.app.iosdev",
   "bundle": {
     "iOS": {
-      "minimumSystemVersion": "15.0"
+      "minimumSystemVersion": "15.0",
+      "developmentTeam": "Z2GA3JXA8J"
     }
   },
   "plugins": {

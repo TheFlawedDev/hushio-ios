@@ -35,7 +35,6 @@
 		22CC63C6A7FB7A6950912C72 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		2A430951389DC055B5C34627 /* media_controls.rs */ = {isa = PBXFileReference; path = media_controls.rs; sourceTree = "<group>"; };
 		32A674DECDA58C21302EEC14 /* lib.rs */ = {isa = PBXFileReference; path = lib.rs; sourceTree = "<group>"; };
-		37AAAA7F2FCE693415E4C00D /* ios.rs */ = {isa = PBXFileReference; path = ios.rs; sourceTree = "<group>"; };
 		42D5793A9FA12944FEFFE7E1 /* han.rs */ = {isa = PBXFileReference; path = han.rs; sourceTree = "<group>"; };
 		43910497824070E0496D526D /* providers.rs */ = {isa = PBXFileReference; path = providers.rs; sourceTree = "<group>"; };
 		4425415683DAF783398EE526 /* playlist_cover.rs */ = {isa = PBXFileReference; path = playlist_cover.rs; sourceTree = "<group>"; };
@@ -60,6 +59,7 @@
 		7130643CA697D5C4A6FE3049 /* linux_portal.rs */ = {isa = PBXFileReference; path = linux_portal.rs; sourceTree = "<group>"; };
 		7145A7AB891B83CD0093D13E /* deletion_sync.rs */ = {isa = PBXFileReference; path = deletion_sync.rs; sourceTree = "<group>"; };
 		71DA0573C2F476FE0F5F6A11 /* cache_limit.rs */ = {isa = PBXFileReference; path = cache_limit.rs; sourceTree = "<group>"; };
+		7633F69E14E88706ED1307AB /* ios_scheme.rs */ = {isa = PBXFileReference; path = ios_scheme.rs; sourceTree = "<group>"; };
 		7C83D3D799D4256BEE316330 /* choice.rs */ = {isa = PBXFileReference; path = choice.rs; sourceTree = "<group>"; };
 		8589BA5DDA08799352723458 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		874B863511ED012A51464598 /* launch.rs */ = {isa = PBXFileReference; path = launch.rs; sourceTree = "<group>"; };
@@ -256,7 +256,7 @@
 				A7EE2000B935421D99EB9611 /* drive_sync.rs */,
 				C85D28D9790B2E78FCE3E211 /* google_auth.rs */,
 				ABC9579C65B726BDD1D141C4 /* install_marker.rs */,
-				37AAAA7F2FCE693415E4C00D /* ios.rs */,
+				7633F69E14E88706ED1307AB /* ios_scheme.rs */,
 				874B863511ED012A51464598 /* launch.rs */,
 				32A674DECDA58C21302EEC14 /* lib.rs */,
 				7130643CA697D5C4A6FE3049 /* linux_portal.rs */,
@@ -346,6 +346,20 @@
 				F3FF133AFA122BA20DB42398 /* bindings.h */,
 			);
 			path = bindings;
+			sourceTree = "<group>";
+		};
+		"TEMP_81BCCF0C-8087-407E-929F-2E7DD882F5F8" /* arm64 */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = arm64;
+			sourceTree = "<group>";
+		};
+		"TEMP_C48559B4-ABAB-4E1A-89E4-E9346323926F" /* x86_64 */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = x86_64;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -478,6 +492,7 @@
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
+				DEVELOPMENT_TEAM = "Z2GA3JXA8J";
 			};
 			name = debug;
 		};
@@ -572,6 +587,7 @@
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
+				DEVELOPMENT_TEAM = "Z2GA3JXA8J";
 			};
 			name = release;
 		};
