@@ -24,6 +24,8 @@ const AUTH_URL: &str = "https://accounts.spotify.com/authorize";
 const TOKEN_URL: &str = "https://accounts.spotify.com/api/token";
 const ME_URL: &str = "https://api.spotify.com/v1/me";
 const ANDROID_SCHEME: &str = "hushio-spotify";
+/// iOS uses the same dedicated scheme; it is registered in `Info.ios.plist`.
+const IOS_SCHEME: &str = "hushio-spotify";
 const APP_REDIRECT_PATH: &str = ":/callback";
 const HTTP_TIMEOUT: Duration = Duration::from_secs(30);
 const SIGN_IN_TIMEOUT: Duration = Duration::from_secs(300);
@@ -67,7 +69,7 @@ pub struct SpotifyBrowser(pub AppHandle);
 
 impl Browser for SpotifyBrowser {
     fn open(&self, url: &str) -> StoreResult<()> {
-        if cfg!(target_os = "android") {
+        if cfg!(any(target_os = "android", target_os = "ios")) {
             return crate::android::open_sign_in(url);
         }
         self.0
@@ -77,7 +79,13 @@ impl Browser for SpotifyBrowser {
     }
 
     fn redirect_scheme(&self) -> Option<String> {
-        cfg!(target_os = "android").then(|| ANDROID_SCHEME.to_owned())
+        if cfg!(target_os = "android") {
+            Some(ANDROID_SCHEME.to_owned())
+        } else if cfg!(target_os = "ios") {
+            Some(IOS_SCHEME.to_owned())
+        } else {
+            None
+        }
     }
 
     fn await_redirect(&self) -> RedirectFuture<'_> {

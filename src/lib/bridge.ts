@@ -13,9 +13,14 @@ import type { JournalEntry, ReplayData } from "./replay";
 import type { DesktopScheme } from "./theme";
 import type { UpdateState } from "./updates";
 
-export type Platform = "windows" | "macos" | "linux" | "android";
+export type Platform = "windows" | "macos" | "linux" | "android" | "ios";
 
 export function detectPlatform(ua: string): Platform {
+  // iPhone/iPad/iPod user agents also contain "Mac OS X", and iPadOS 13+ can
+  // masquerade as "Macintosh", so iOS must be checked before the Mac branch.
+  // A user agent alone cannot reliably distinguish iPadOS 13+ from a Mac; the
+  // phone shell targets iPhone and does not add a tablet-specific layout.
+  if (/iPhone|iPad|iPod/.test(ua)) return "ios";
   if (/Android/.test(ua)) return "android";
   if (/Linux/.test(ua)) return "linux";
   if (/Macintosh|Mac OS X/.test(ua)) return "macos";

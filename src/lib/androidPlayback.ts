@@ -52,7 +52,20 @@ export function isAndroidAgent(userAgent: string): boolean {
   return /Android/.test(userAgent);
 }
 
+/** iOS runs the same `hushio-player` native boundary (AVFoundation instead of Media3). */
+export function isIOSAgent(userAgent: string): boolean {
+  return /iPhone|iPad|iPod/.test(userAgent);
+}
+
 export const ANDROID = isAndroidAgent(navigator.userAgent);
+export const IOS = isIOSAgent(navigator.userAgent);
+
+/**
+ * True when playback is owned by the native `hushio-player` plugin rather than the
+ * HTML/`NativeAudioDeck` path. Android and iOS share the same command/event contract
+ * (`src/lib/bridge.ts`), so `androidEngine.ts` drives both.
+ */
+export const NATIVE_PLAYER = ANDROID || IOS;
 
 export function expiryOf(url: string, nowMs: number): number {
   const match = EXPIRE_PARAM.exec(url);

@@ -24,7 +24,8 @@ async function releaseSentinel(): Promise<void> {
 }
 
 export async function setKeepAwake(on: boolean): Promise<void> {
-  if (platform === "android") {
+  if (platform === "android" || platform === "ios") {
+    // iOS maps this to UIApplication.isIdleTimerDisabled in HushioPlayerPlugin.
     await playerKeepAwake(on).catch(() => {});
     return;
   }

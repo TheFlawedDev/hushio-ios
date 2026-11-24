@@ -1,0 +1,15 @@
+{
+  "view": "local",
+  "viewport": {
+    "width": 375,
+    "height": 812
+  },
+  "requestedColorScheme": "dark",
+  "body": "Local music\nPlay your own files\n\nImport a folder and its songs play here, offline, with tags and cover art.\n\nChoose a folder\nHome\nSearch\nLibrary\nHotlist\nCannot read properties of undefined (reading 'invoke')\nCannot read properties of undefined (reading 'transformCallback')\nCouldn't load your local music",
+  "pageErrors": [
+    "Cannot read properties of undefined (reading 'metadata')",
+    "Cannot read properties of undefined (reading 'transformCallback')",
+    "Cannot read properties of undefined (reading 'transformCallback')"
+  ],
+  "nativeBridge": "absent; no mocks or fabricated data; navigated using actual store API"
+}

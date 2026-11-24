@@ -1,0 +1,15 @@
+{
+  "view": "library",
+  "viewport": {
+    "width": 430,
+    "height": 932
+  },
+  "requestedColorScheme": "light",
+  "body": "Library\nLiked Songs\nPinned,\nSongs you like land here\nDownloads\nNothing saved yet\nHistory\nRecently played\nLocal music\nOn this device\nImport\nPlaylists from other apps\nPlaylists\nNew playlist\nStart one with songs you like\nHome\nSearch\nLibrary\nHotlist\nCannot read properties of undefined (reading 'invoke')\nCannot read properties of undefined (reading 'transformCallback')\nCouldn't load your local music",
+  "pageErrors": [
+    "Cannot read properties of undefined (reading 'metadata')",
+    "Cannot read properties of undefined (reading 'transformCallback')",
+    "Cannot read properties of undefined (reading 'transformCallback')"
+  ],
+  "nativeBridge": "absent; no mocks or fabricated data; navigated using actual store API"
+}

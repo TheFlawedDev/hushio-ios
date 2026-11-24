@@ -69,7 +69,10 @@ mod bridge {
 
     fn plugins() -> Result<tauri::State<'static, AndroidBridges<Wry>>, String> {
         let app = APP.get().ok_or_else(|| NOT_READY.to_owned())?;
-        Ok(app.state::<AndroidBridges<Wry>>())
+        // `try_state`, not `state`: a missing manage must be a recoverable error, not an
+        // abort. `AppHandle::state` panics and took the whole app down once already.
+        app.try_state::<AndroidBridges<Wry>>()
+            .ok_or_else(|| NOT_READY.to_owned())
     }
 
     fn pick<'a>(plugins: &'a AndroidBridges<Wry>, bridge: Bridge) -> Result<&'a PluginHandle<Wry>, String> {
@@ -161,9 +164,242 @@ mod bridge {
     }
 }
 
-#[cfg(not(target_os = "android"))]
+#[cfg(all(target_os = "ios"))]
+mod bridge {
+    //! iOS implementation of the shared mobile bridge facade.
+    //!
+    //! Shared modules (`secrets.rs`, `google_auth.rs`, `spotify_auth.rs`, `downloads.rs`,
+    //! `local_library`, `reveal.rs`, `tree_library.rs`, `lyrics`) all call
+    //! `crate::android::*`. On iOS those calls land here and are forwarded to the Swift
+    //! plugins registered under the same names Android uses (`hushio-secure`,
+    //! `hushio-audio`, `hushio-media`, `hushio-auth`, `hushio-permission`, `hushio-sync`).
+    //! Command names and payload shapes are identical, so no call site needs a branch.
+
+    use std::sync::OnceLock;
+
+    use serde::Deserialize;
+    use serde::de::DeserializeOwned;
+    use serde_json::{Value, json};
+    use tauri::plugin::PluginHandle;
+    use tauri::{AppHandle, Manager, Wry};
+    use tauri_plugin_hushio_player::AndroidBridges;
+
+    use crate::tree_library::TreeItem;
+
+    static APP: OnceLock<AppHandle<Wry>> = OnceLock::new();
+    const NOT_READY: &str = "iOS services are not ready yet.";
+
+    #[derive(Clone, Copy)]
+    pub enum Bridge {
+        Secure,
+        Media,
+        Auth,
+        Permission,
+        Audio,
+        Sync,
+    }
+
+    #[derive(Deserialize)]
+    struct PickedTree {
+        uri: Option<String>,
+    }
+
+    #[derive(Deserialize)]
+    struct TreeReply {
+        items: Vec<TreeItem>,
+    }
+
+    #[derive(Deserialize)]
+    struct SecretValue {
+        value: Option<String>,
+    }
+
+    #[derive(Deserialize)]
+    struct SidecarText {
+        text: Option<String>,
+    }
+
+    #[derive(Deserialize)]
+    struct PublishedUri {
+        uri: String,
+    }
+
+    #[derive(Deserialize)]
+    struct RedirectUrl {
+        url: String,
+    }
+
+    pub fn init(app: &AppHandle<Wry>) {
+        let _ = APP.set(app.clone());
+    }
+
+    fn plugins() -> Result<tauri::State<'static, AndroidBridges<Wry>>, String> {
+        let app = APP.get().ok_or_else(|| NOT_READY.to_owned())?;
+        Ok(app.state::<AndroidBridges<Wry>>())
+    }
+
+    /// `PluginApi::register_ios_plugin` / `run_mobile_plugin` round-trips hop to the main
+    /// thread and wait. A bridge call made while the main thread is still inside Tauri's
+    /// `setup` therefore deadlocks: the window appears but the WKWebView never paints a
+    /// frame (observed, and fixed by bounding every call).
+    ///
+    /// `BLOCKED` is set when a call times out and short-circuits every later call until one
+    /// succeeds again, so startup pays the timeout at most once instead of once per probe.
+    static BLOCKED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+    const CALL_TIMEOUT: std::time::Duration = std::time::Duration::from_millis(1500);
+
+    fn mark_ok() {
+        BLOCKED.store(false, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    fn check_ready() -> Result<(), String> {
+        if BLOCKED.load(std::sync::atomic::Ordering::Relaxed) {
+            return Err("iOS services are not ready yet.".to_owned());
+        }
+        Ok(())
+    }
+
+    /// Blocking bridge call with a hard ceiling, used by the synchronous shared call
+    /// sites (secrets, tree scan, sign-in open, media delete) which run during startup.
+    ///
+    /// Deliberately does NOT use `block_on`: releasing a build can reach this from inside
+    /// an existing Tokio runtime context and `Runtime::block_on` panics there (observed as
+    /// a launch abort). Spawning the work and waiting on a channel with a timeout is safe
+    /// from any thread.
+    fn call_bounded<T: DeserializeOwned + Send + 'static>(
+        command: &'static str,
+        payload: Value,
+    ) -> Result<T, String> {
+        check_ready()?;
+        let handle = handle()?;
+        let (tx, rx) = std::sync::mpsc::channel();
+        tauri::async_runtime::spawn(async move {
+            let outcome = handle
+                .run_mobile_plugin_async::<T>(command, payload)
+                .await
+                .map_err(|error| error.to_string());
+            let _ = tx.send(outcome);
+        });
+        match rx.recv_timeout(CALL_TIMEOUT) {
+            Ok(Ok(value)) => {
+                mark_ok();
+                Ok(value)
+            }
+            Ok(Err(error)) => Err(error),
+            Err(_) => {
+                BLOCKED.store(true, std::sync::atomic::Ordering::Relaxed);
+                tracing::debug!("iOS bridge {command} timed out; deferring further calls");
+                Err("timeout".to_owned())
+            }
+        }
+    }
+
+    /// Async bridge call with the same ceiling (no `block_on`, so it is safe inside a
+    /// running runtime).
+    async fn call_async_bounded<T: DeserializeOwned>(
+        command: &'static str,
+        payload: Value,
+    ) -> Result<T, String> {
+        check_ready()?;
+        let handle = handle()?;
+        match tokio::time::timeout(
+            CALL_TIMEOUT,
+            handle.run_mobile_plugin_async::<T>(command, payload),
+        )
+        .await
+        {
+            Ok(Ok(value)) => {
+                mark_ok();
+                Ok(value)
+            }
+            Ok(Err(error)) => Err(error.to_string()),
+            Err(_) => {
+                BLOCKED.store(true, std::sync::atomic::Ordering::Relaxed);
+                Err("timeout".to_owned())
+            }
+        }
+    }
+
+    /// The single registered iOS plugin carries every bridge; `player` is its handle.
+    /// Returns an owned clone so callers do not borrow the app state guard.
+    fn handle() -> Result<PluginHandle<Wry>, String> {
+        let app = APP.get().ok_or_else(|| NOT_READY.to_owned())?;
+        let state = app
+            .try_state::<AndroidBridges<Wry>>()
+            .ok_or_else(|| NOT_READY.to_owned())?;
+        state.player.get().cloned().ok_or_else(|| NOT_READY.to_owned())
+    }
+
+    pub async fn schedule_retry() -> Result<(), String> {
+        call_async_bounded::<Value>("schedule", json!({})).await.map(drop)
+    }
+
+    pub async fn pick_tree() -> Result<Option<String>, String> {
+        let reply: PickedTree = call_async_bounded("pick_tree", json!({})).await?;
+        Ok(reply.uri)
+    }
+
+    pub fn scan_tree(uri: &str) -> Result<Vec<TreeItem>, String> {
+        let reply: TreeReply = call_bounded("scan_tree", json!({ "uri": uri }))?;
+        Ok(reply.items)
+    }
+
+    pub fn read_sidecar_lrc(uri: &str) -> Option<String> {
+        call_bounded::<SidecarText>("read_sidecar_lrc", json!({ "uri": uri }))
+            .ok()?
+            .text
+    }
+
+    pub fn media_delete(uri: &str) -> Result<(), String> {
+        call_bounded::<Value>("media_store_delete", json!({ "uri": uri })).map(drop)
+    }
+
+    pub fn secret_read(key: &str) -> Result<Option<String>, String> {
+        let reply: SecretValue = call_bounded("secure_get", json!({ "key": key }))?;
+        Ok(reply.value)
+    }
+
+    pub fn secret_write(key: &str, value: &str) -> Result<(), String> {
+        call_bounded::<Value>("secure_set", json!({ "key": key, "value": value })).map(drop)
+    }
+
+    pub fn secret_clear(key: &str) -> Result<(), String> {
+        call_bounded::<Value>("secure_clear", json!({ "key": key })).map(drop)
+    }
+
+    pub async fn publish_download(path: &str, display_name: &str) -> Result<String, String> {
+        let reply: PublishedUri = call_async_bounded(
+            "media_store_publish",
+            json!({ "path": path, "displayName": display_name }),
+        )
+        .await?;
+        Ok(reply.uri)
+    }
+
+    pub fn open_sign_in(url: &str) -> Result<(), String> {
+        call_bounded::<Value>("auth_open", json!({ "url": url })).map(drop)
+    }
+
+    pub async fn await_sign_in_redirect() -> Result<String, String> {
+        let reply: RedirectUrl = call_async_bounded("auth_await", json!({})).await?;
+        Ok(reply.url)
+    }
+
+    pub async fn update(command: &str, _payload: Value) -> Result<Value, String> {
+        // In-app APK self-update is Android-only. iOS distribution is Xcode development
+        // signing / TestFlight / App Store, so there is no update bridge to call.
+        Err(format!("{command} is not supported on iOS"))
+    }
+}
+
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
 #[allow(dead_code)]
 mod bridge {
+    // Phase-B temporary dispatch point. On iOS this branch is superseded by crate::ios (see
+    // src/ios.rs); the `Err("Android services are only available on Android.")` responses
+    // below are NOT an iOS capability. Phase C/D replaces secrets/files/auth on iOS via the
+    // Swift bridges registered in tauri-plugin-hushio-player, not via this module.
     const NOT_ANDROID: &str = "Android services are only available on Android.";
 
     pub fn init(_app: &tauri::AppHandle<tauri::Wry>) {}

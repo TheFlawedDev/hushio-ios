@@ -517,7 +517,7 @@ function soundCategory(context: BuildContext): SettingsCategory {
               />
             ),
           },
-          ...(context.platform === "android"
+          ...(isMobilePlatform(context.platform)
             ? [
                 {
                   id: "mobile-streaming-quality",
@@ -702,7 +702,7 @@ function displayCategory(context: BuildContext): SettingsCategory {
             note: "Cuts crossfades and motion through the app.",
             toggle: flag(s, "reduceAnimation"),
           },
-          ...(context.platform === "android"
+          ...(isMobilePlatform(context.platform)
             ? [
                 {
                   id: "vibration-feedback",
@@ -885,7 +885,7 @@ function libraryCategory(context: BuildContext): SettingsCategory {
               />
             ),
           },
-          ...(context.platform === "android"
+          ...(isMobilePlatform(context.platform)
             ? [
                 {
                   id: "download-wifi-only",
@@ -1106,14 +1106,33 @@ const ANDROID_HIDDEN_ROWS = new Set([
   "discord-rich-presence",
 ]);
 
+/** Rows whose capability genuinely does not exist on iOS. Mirrors the Android set (this
+ * port's player has no crossfade/Automix/EQ-driven rows, and iOS has no system tray,
+ * desktop audio-sink picker, desktop download folder, MediaStore export or Discord IPC),
+ * and additionally drops the in-app updater: iOS distribution is Xcode development
+ * signing / TestFlight / App Store, so a "Check for updates" control backed by the mobile
+ * stub would be a fabricated success. See docs/ios-port/FEATURE_MATRIX.md. */
+const IOS_HIDDEN_ROWS = new Set([...ANDROID_HIDDEN_ROWS, "updates", "auto-update-check"]);
+
+function hiddenRowsFor(platform: Platform): Set<string> | null {
+  if (platform === "android") return ANDROID_HIDDEN_ROWS;
+  if (platform === "ios") return IOS_HIDDEN_ROWS;
+  return null;
+}
+
+function isMobilePlatform(platform: Platform): boolean {
+  return platform === "android" || platform === "ios";
+}
+
 function forPlatform(categories: SettingsCategory[], platform: Platform): SettingsCategory[] {
-  if (platform !== "android") return categories;
+  const hidden = hiddenRowsFor(platform);
+  if (hidden === null) return categories;
   return categories.map((category) => ({
     ...category,
     groups: category.groups
       .map((group) => ({
         ...group,
-        rows: group.rows.filter((row) => !ANDROID_HIDDEN_ROWS.has(row.id)),
+        rows: group.rows.filter((row) => !hidden.has(row.id)),
       }))
       .filter((group) => group.rows.length > 0 || group.body !== undefined),
   }));

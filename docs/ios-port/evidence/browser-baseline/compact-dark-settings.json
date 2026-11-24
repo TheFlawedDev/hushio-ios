@@ -1,0 +1,15 @@
+{
+  "view": "settings",
+  "viewport": {
+    "width": 375,
+    "height": 812
+  },
+  "requestedColorScheme": "dark",
+  "body": "Settings\nNot signed in\nSign in to sync playlists and likes\nDownloads\nPlayback\nSound\nLyrics\nDisplay\nLibrary\nScrobbling\nYour data\nAbout\nHome\nSearch\nLibrary\nHotlist\nCannot read properties of undefined (reading 'invoke')\nCannot read properties of undefined (reading 'transformCallback')\nCouldn't load your local music",
+  "pageErrors": [
+    "Cannot read properties of undefined (reading 'metadata')",
+    "Cannot read properties of undefined (reading 'transformCallback')",
+    "Cannot read properties of undefined (reading 'transformCallback')"
+  ],
+  "nativeBridge": "absent; no mocks or fabricated data; navigated using actual store API"
+}

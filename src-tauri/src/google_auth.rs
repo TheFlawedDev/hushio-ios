@@ -155,7 +155,10 @@ pub struct SystemBrowser(pub AppHandle);
 
 impl Browser for SystemBrowser {
     fn open(&self, url: &str) -> StoreResult<()> {
-        if cfg!(target_os = "android") {
+        // Both mobile platforms use the native in-app browser (Custom Tabs on Android,
+        // ASWebAuthenticationSession on iOS) so the custom-scheme redirect comes back to
+        // the app instead of a loopback listener that iOS cannot register.
+        if cfg!(any(target_os = "android", target_os = "ios")) {
             return crate::android::open_sign_in(url);
         }
         self.0
@@ -167,6 +170,8 @@ impl Browser for SystemBrowser {
     fn redirect_scheme(&self) -> Option<String> {
         if cfg!(target_os = "android") {
             android_redirect_scheme(GOOGLE_CLIENT_ID)
+        } else if cfg!(target_os = "ios") {
+            Some(crate::ios_scheme::REDIRECT_SCHEME.to_owned())
         } else {
             None
         }

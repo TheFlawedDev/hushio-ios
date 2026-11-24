@@ -15,6 +15,7 @@ mod linux_session;
 mod local_library;
 mod lyrics;
 mod install_marker;
+mod ios_scheme;
 mod macos_window;
 mod media_controls;
 mod menu;
@@ -784,15 +785,24 @@ pub fn run() {
                 app.manage(window::Glass::default());
                 app.manage(pip::Pip::default());
             }
+            #[cfg(desktop)]
             linux_session::setup(app.handle());
+            #[cfg(desktop)]
             linux_portal::start(app.handle());
             #[cfg(desktop)]
             tray::setup(app.handle());
+            #[cfg(desktop)]
             taskbar::setup(app.handle());
             let controls = media_controls::Controls::default();
+            #[cfg(desktop)]
             controls.install(app.handle());
             app.manage(controls);
             app.manage(launch::Pending::default());
+            // Runtime custom-scheme registration is a desktop capability. On iOS the
+            // schemes are declared statically in `Info.ios.plist` (CFBundleURLTypes),
+            // which is how the OS routes them; the deep-link plugin's `register`
+            // returns "unsupported platform" there.
+            #[cfg(desktop)]
             launch::register_scheme(app.handle());
             let argv: Vec<String> = std::env::args().collect();
             let cwd = std::env::current_dir().unwrap_or_default();

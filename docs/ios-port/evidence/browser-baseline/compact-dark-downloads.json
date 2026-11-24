@@ -1,0 +1,15 @@
+{
+  "view": "downloads",
+  "viewport": {
+    "width": 375,
+    "height": 812
+  },
+  "requestedColorScheme": "dark",
+  "body": "Downloads\nNothing saved yet\nPlay\nShuffle\nNo downloads yet\n\nUse the download arrow on a song to keep it offline.\n\nFind songs\nHome\nSearch\nLibrary\nHotlist\nCannot read properties of undefined (reading 'invoke')\nCannot read properties of undefined (reading 'transformCallback')\nCouldn't load your local music",
+  "pageErrors": [
+    "Cannot read properties of undefined (reading 'metadata')",
+    "Cannot read properties of undefined (reading 'transformCallback')",
+    "Cannot read properties of undefined (reading 'transformCallback')"
+  ],
+  "nativeBridge": "absent; no mocks or fabricated data; navigated using actual store API"
+}

@@ -20,10 +20,11 @@ import { Sidebar } from "./components/Sidebar";
 import { SwipeArrow } from "./components/SwipeArrow";
 import { Toasts } from "./components/Toasts";
 import { TopBar } from "./components/TopBar";
-import { platform, watchFullScreen } from "./lib/bridge";
+import { watchFullScreen } from "./lib/bridge";
 import { listenForDownloadProgress } from "./lib/downloads";
 import { startLaunchActions } from "./lib/launch";
-import { railFor, shellFor, sidebarFor, useShortSide, useViewportWidth } from "./lib/layoutTier";
+import { railFor, sidebarFor, useViewportWidth } from "./lib/layoutTier";
+import { usePhone } from "./lib/usePhone";
 import { startWindowGlass } from "./lib/windowGlass";
 import { nowPlayingRoll } from "./lib/nowPlayingRoll";
 import { rollStyles } from "./lib/rollUp";
@@ -52,8 +53,7 @@ export default function App() {
   const railSheetOpen = useUI((state) => state.railSheetOpen);
   const railColumnOpen = useUI((state) => state.railColumnOpen);
   const width = useViewportWidth();
-  const shortSide = useShortSide();
-  const android = platform === "android";
+  const phone = usePhone();
 
   const reducedRoll = reducedMotion();
   const roll = useTransform(nowPlayingRoll, (p) => rollStyles(p, window.innerHeight, reducedRoll));
@@ -64,7 +64,7 @@ export default function App() {
   useKeyboardShortcuts();
   useSwipeNavigation();
   useMenuCommands();
-  usePhoneBack(android);
+  usePhoneBack(phone);
 
   useEffect(() => startYtSync(), []);
   useEffect(() => startTraySync(), []);
@@ -109,7 +109,7 @@ export default function App() {
     clearPendingScroll();
   }, [pendingScroll, clearPendingScroll]);
 
-  if (android && shellFor(shortSide) === "phone") return <PhoneShell />;
+  if (phone) return <PhoneShell />;
 
   return (
     <div

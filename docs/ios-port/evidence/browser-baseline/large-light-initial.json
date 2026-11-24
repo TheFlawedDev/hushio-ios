@@ -1,0 +1,16 @@
+{
+  "url": "http://127.0.0.1:5173/",
+  "viewport": {
+    "width": 430,
+    "height": 932
+  },
+  "requestedColorScheme": "light",
+  "ua": "Android UA to select unchanged baseline phone shell; not iOS runtime",
+  "body": "Good afternoon\nHome\nSearch\nLibrary\nHotlist\nCannot read properties of undefined (reading 'invoke')\nCannot read properties of undefined (reading 'transformCallback')\nCouldn't load your local music",
+  "pageErrors": [
+    "Cannot read properties of undefined (reading 'metadata')",
+    "Cannot read properties of undefined (reading 'transformCallback')",
+    "Cannot read properties of undefined (reading 'transformCallback')"
+  ],
+  "nativeBridge": "absent; no mock/native success responses or fabricated data"
+}

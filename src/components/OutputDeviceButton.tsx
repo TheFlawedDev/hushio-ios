@@ -44,7 +44,7 @@ export function OutputDeviceButton() {
     root.current?.querySelector<HTMLButtonElement>('[role="menuitemradio"][aria-checked="true"]')?.focus();
   }, [open]);
 
-  if (platform === "android") return null;
+  if (platform === "android" || platform === "ios") return null;
 
   const choices = deviceChoices(devices);
   const note = activeDefaultLabel(choices);

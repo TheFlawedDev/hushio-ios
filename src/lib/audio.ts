@@ -32,7 +32,7 @@ import {
   androidSetVolume,
   startAndroidEngine,
 } from "./androidEngine";
-import { ANDROID, type PlayMeta } from "./androidPlayback";
+import { NATIVE_PLAYER, type PlayMeta } from "./androidPlayback";
 import { clampCrossfadeSeconds, useSettings, type SettingsValues } from "../stores/settings";
 import { playFailedMessage } from "./playFailed";
 import { useUI } from "../stores/ui";
@@ -143,15 +143,15 @@ export function standbyDeck() {
 
 class Playback extends EventTarget {
   get currentTime(): number {
-    return ANDROID ? androidPosition() : activeDeck().currentTime;
+    return NATIVE_PLAYER ? androidPosition() : activeDeck().currentTime;
   }
 
   get duration(): number {
-    return ANDROID ? androidDuration() : activeDeck().duration;
+    return NATIVE_PLAYER ? androidDuration() : activeDeck().duration;
   }
 
   get playbackRate(): number {
-    return ANDROID ? androidRate() : activeDeck().playbackRate;
+    return NATIVE_PLAYER ? androidRate() : activeDeck().playbackRate;
   }
 }
 
@@ -243,7 +243,7 @@ function buildGraph(): Graph {
 
 export function applyEq(next: EqSettings): void {
   eqState = next;
-  if (ANDROID) {
+  if (NATIVE_PLAYER) {
     androidSetEq(next.enabled, next.gains);
     return;
   }
@@ -303,7 +303,7 @@ function noteLoudness(id: string, lufs: number): void {
 
 function applySpeed(): void {
   const rate = useSettings.getState().playbackSpeed || 1;
-  if (ANDROID) {
+  if (NATIVE_PLAYER) {
     androidSetSpeed(rate);
     return;
   }
@@ -316,7 +316,7 @@ function applySpeed(): void {
 export function setVolume(value: number): void {
   if (!Number.isFinite(value)) return;
   volume = clamp(value, 0, 1);
-  if (ANDROID) {
+  if (NATIVE_PLAYER) {
     androidSetVolume(volume);
     return;
   }
@@ -324,7 +324,7 @@ export function setVolume(value: number): void {
 }
 
 export function setMuted(value: boolean): void {
-  if (ANDROID) {
+  if (NATIVE_PLAYER) {
     androidSetVolume(value ? 0 : volume);
     return;
   }
@@ -505,7 +505,7 @@ function disarmStall(): void {
 }
 
 function armStall(): void {
-  if (ANDROID || stall !== null || !wantPlaying) return;
+  if (NATIVE_PLAYER || stall !== null || !wantPlaying) return;
   const seq = loadSeq;
   const mark = activeDeck().currentTime;
   const timer = setTimeout(() => {
@@ -582,7 +582,7 @@ async function reloadMain(current: Song): Promise<void> {
 
 export async function playStream(id: string, title: string, fromSeconds = 0, meta: PlayMeta = {}): Promise<void> {
   traceMark("tap", id);
-  if (ANDROID) return androidPlayStream(id, title, fromSeconds, meta);
+  if (NATIVE_PLAYER) return androidPlayStream(id, title, fromSeconds, meta);
   abortBlend();
   disarmSilence();
   disarmStall();
@@ -598,7 +598,7 @@ export async function playStream(id: string, title: string, fromSeconds = 0, met
 }
 
 export async function play(): Promise<void> {
-  if (ANDROID) return androidPlay();
+  if (NATIVE_PLAYER) return androidPlay();
   const current = song;
   if (!current) return;
   const resuming = !wantPlaying;
@@ -619,7 +619,7 @@ export async function play(): Promise<void> {
 }
 
 export function pause(): void {
-  if (ANDROID) {
+  if (NATIVE_PLAYER) {
     androidPause();
     return;
   }
@@ -632,12 +632,12 @@ export function pause(): void {
 }
 
 export function getPlaybackPosition(): number {
-  return ANDROID ? androidPosition() : activeDeck().currentTime;
+  return NATIVE_PLAYER ? androidPosition() : activeDeck().currentTime;
 }
 
 export function seekTo(seconds: number): void {
   if (!Number.isFinite(seconds)) return;
-  if (ANDROID) {
+  if (NATIVE_PLAYER) {
     androidSeek(seconds);
     return;
   }
@@ -920,4 +920,4 @@ useSettings.subscribe((state, previous) => {
 applySpeed();
 applyEq(eqSettingsOf(useSettings.getState()));
 applySink(useSettings.getState().audioSinkId);
-if (ANDROID) startAndroidEngine((type) => audio.dispatchEvent(new Event(type)));
+if (NATIVE_PLAYER) startAndroidEngine((type) => audio.dispatchEvent(new Event(type)));

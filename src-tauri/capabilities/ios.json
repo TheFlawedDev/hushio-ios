@@ -1,0 +1,36 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "ios",
+  "description": "Permissions for the iOS phone app (Phase B). Mirrors the source-reachable permissions in default.json minus the desktop-only window/zoom controls.",
+  "windows": ["main"],
+  "platforms": ["iOS"],
+  "permissions": [
+    "core:default",
+    "opener:default",
+    "store:default",
+    "clipboard-manager:allow-write-image",
+    "dialog:default",
+    "hushio-player:default",
+    {
+      "identifier": "http:default",
+      "allow": [
+        { "url": "https://www.youtube.com/*" },
+        { "url": "https://music.youtube.com/*" },
+        { "url": "https://*.googlevideo.com/*" },
+        { "url": "https://jnn-pa.googleapis.com/*" },
+        { "url": "https://pipedapi.kavin.rocks/*" },
+        { "url": "https://pipedapi.adminforge.de/*" },
+        { "url": "https://api.piped.private.coffee/*" },
+        { "url": "https://open.spotify.com/*" },
+        { "url": "https://spotify.link/*" },
+        { "url": "https://api-partner.spotify.com/*" },
+        { "url": "https://api.spotify.com/*" },
+        { "url": "https://music.apple.com/*" },
+        { "url": "https://amp-api.music.apple.com/*" },
+        { "url": "https://api.tidal.com/*" },
+        { "url": "https://vivimusicanvas.mkmdevilmi.workers.dev/*" },
+        { "url": "https://*/*" }
+      ]
+    }
+  ]
+}

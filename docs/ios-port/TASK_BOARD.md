@@ -1,0 +1,27 @@
+# Dependency-ordered task board
+
+Baseline `2122110f9b41436723f368d3e1fb4d8a2a4276c2`. All tasks after A are **pending**, not implementation claims. Fine-grained feature assignments must match `FEATURE_MATRIX.md` and `BEHAVIOR_CONTRACTS.md` once reviewed. No concurrent owners for overlapping files. Lead owns shared-interface approval.
+
+| ID | Owner | File group / source references | Dependencies | Acceptance tests / evidence |
+|---|---|---|---|---|
+| A1 | Lead | Worktree, master plan, coordination/evidence docs | None | Original checkout status preserved; baseline SHA recorded; exact tests and exits retained |
+| A2 | Source Archaeologist | `src/views`, `src/stores`, `src/lib/bridge.ts`, `src-tauri/src`, Android plugin | A1 | Source atlas, complete initial feature matrix and behavior contracts; references and uncertainties explicit |
+| A3 | Design Custodian | `src/styles`, `src/index.css`, `tailwind.config.js`, `src/components/phone`, view/phone tests | A1 | Binding design spec and reference-view inventory; no invented styles; iOS accommodations distinguished |
+| A4 | Tauri/Rust Engineer | Cargo/build/Tauri configuration and plugin scaffolding; report only | A1 | Readiness report citing tooling and current primary docs; compile blockers identified, no unsupported success claims |
+| B1 | Build/Release Engineer | Toolchain/environment (no application code) | A4, user Xcode license review | SDK/runtime inventory; iOS Rust std present; exact versions and commands; no global developer-dir change |
+| B2 | Tauri/Rust Engineer | `src-tauri/Cargo.toml`, `build.rs`, Tauri configs/capabilities, generated iOS host, Rust startup/platform cfg | A2+A3 reviewed, B1 | Actual iOS simulator compilation/launch; desktop-only paths do not initialize; baseline Rust tests still pass; no no-op capability claims |
+| B3 | React Port Engineer with lead interface approval | `src/lib/bridge.ts::Platform/detectPlatform`, `App.tsx`, `usePhone.ts`, startup/html/layout guards | A2+A3 reviewed, B2 integration contract | Platform detection and phone-shell tests for iOS, Android and desktops; iPhone UA checked before Mac OS X branch; no desktop startup calls on iOS; shared UI displayed in simulator |
+| C1 | iOS Media Engineer | New native iOS playback beneath existing mobile bridge; Android payload/queue contracts in source atlas | B2, detailed playback contracts, lead registration approval | Controlled real audio on physical iPhone: play/pause/seek/duration/completion/errors; stale source-event rejection; no simulated success |
+| C2 | iOS Media Engineer | Native background ownership, audio session, remote commands, queue synchronization | C1 | Lock/app switching, interruption, route/headphones/Bluetooth, rapid replacements and queue advance while JS suspended; device evidence |
+| C3 | iOS Media Engineer + lead | Existing EQ/rate/volume/crossfade/silence behavior | C1+C2, extracted advanced capability contracts | Format/request-header tests; advanced audio equivalence proposal/test or explicit blocker for each capability; preserve shared resolution/retry logic |
+| D1 | iOS Services Engineer | Secrets/accounts/auth native adapters; baseline `secrets.rs`, auth modules, bridge wrappers | Playback physical proof per plan, source service contracts, lead interface approval | Unconfigured/cancel/deny/success/disconnect, Keychain persistence, redirect validation; no credential logging or fabricated login |
+| D2 | iOS Services Engineer | Files/downloads/local library/import/export adapters, sandbox references | C physical gate, file contracts; coordinate Rust files with B owner released | Picker cancellation/denial, directory scope, relaunch persistence, partial failure, offline real-file playback; schema/identifier compatibility |
+| D3 | iOS Services Engineer | Sharing/clipboard/haptics/network/notifications/sync/optional integrations | C physical gate, matrix source rows | Each baseline feature mapped to verified adapter, explicitly inapplicable OS-only path, or documented blocker; foreground/background behavior tested separately |
+| E1 | React Port Engineer | Existing phone components/views/styles only as directed by DESIGN_SPEC | B3, C/D adapter capabilities | Compact/large iPhones, keyboard/insets/sheets/scroll, light/dark and Reduce Motion; visible unsupported capability states; no new hierarchy |
+| E2 | Design Custodian | Review/evidence only; no simultaneous UI edits | E1 | Source-token comparison and actual screenshots for all required views; VoiceOver labels/focus/touch-target audit; defects listed |
+| F1 | QA/Behavioral Parity Engineer | Test/evidence/parity docs, adapter-specific tests under owner agreement | B–E gates | Full supplied scenarios; separate source defects vs regressions; typecheck/frontend/Rust regression results; physical runtime tests mandatory |
+| F2 | Build/Release Engineer | Reproduction/signing/install/handoff docs | F1, user signing/device trust | Exact source commit; working build/install steps; installation and refresh proof; no upload/purchase/App Store actions |
+
+## Scheduling
+
+Lead plus at most three active specialists. Current tasks A2, A3, A4 have disjoint documentation ownership. B–F are queued. A failing/blocked track does not justify skipping its acceptance gate; independent baseline documentation/test work can continue. Integration interface changes are sequential and require explicit handoff of file ownership.

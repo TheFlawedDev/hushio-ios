@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderHook, act, cleanup } from "@testing-library/react";
 
-const mocks = vi.hoisted(() => ({ platform: "android" as "android" | "windows" }));
+const mocks = vi.hoisted(() => ({ platform: "android" as "android" | "ios" | "windows" }));
 
 vi.mock("./bridge", () => ({
   get platform() {
@@ -54,7 +54,21 @@ describe("usePhone", () => {
     expect(renderHook(() => usePhone()).result.current).toBe(false);
   });
 
-  it("is false on non-Android platforms whatever the viewport", () => {
+  it("is true for an iPhone in portrait and landscape", () => {
+    mocks.platform = "ios";
+    setViewport(390, 844);
+    expect(renderHook(() => usePhone()).result.current).toBe(true);
+    setViewport(844, 390);
+    expect(renderHook(() => usePhone()).result.current).toBe(true);
+  });
+
+  it("is false for an iPad-sized ios viewport", () => {
+    mocks.platform = "ios";
+    setViewport(840, 1280);
+    expect(renderHook(() => usePhone()).result.current).toBe(false);
+  });
+
+  it("is false on non-Android, non-iOS platforms whatever the viewport", () => {
     mocks.platform = "windows";
     setViewport(390, 844);
     expect(renderHook(() => usePhone()).result.current).toBe(false);

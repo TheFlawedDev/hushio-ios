@@ -9,5 +9,5 @@ export function usesNativeMediaControls(platform: Platform): boolean {
 }
 
 export function deviceNoun(platform: Platform): "phone" | "computer" {
-  return platform === "android" ? "phone" : "computer";
+  return platform === "android" || platform === "ios" ? "phone" : "computer";
 }

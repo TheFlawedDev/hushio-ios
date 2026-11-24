@@ -1,17 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const hoisted = vi.hoisted(() => ({
+  platform: "android" as "android" | "ios" | "windows",
   getInsets: vi.fn(),
   listen: vi.fn(),
   unlisten: vi.fn(),
 }));
 
 vi.mock("./bridge", () => ({
+  get platform() {
+    return hoisted.platform;
+  },
   playerGetInsets: hoisted.getInsets,
   listenPlayerEvent: hoisted.listen,
 }));
 
 import { applyInsets, refreshInsets, startInsets } from "./insets";
+import { INSET_BOTTOM, INSET_TOP } from "./phoneNav";
 
 const root = document.documentElement;
 const px = (name: string) => root.style.getPropertyValue(name);
@@ -27,6 +32,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  hoisted.platform = "android";
   root.removeAttribute("style");
 });
 
@@ -96,5 +102,18 @@ describe("startInsets", () => {
     hoisted.getInsets.mockClear();
     window.dispatchEvent(new Event("resize"));
     expect(hoisted.getInsets).not.toHaveBeenCalled();
+  });
+
+  it("leaves iOS safe areas to the CSS env() fallback", async () => {
+    hoisted.platform = "ios";
+    const stop = startInsets();
+    await flush();
+    expect(hoisted.getInsets).not.toHaveBeenCalled();
+    expect(hoisted.listen).not.toHaveBeenCalled();
+    expect(px("--inset-top")).toBe("");
+    expect(px("--inset-bottom")).toBe("");
+    expect(INSET_TOP).toContain("env(safe-area-inset-top");
+    expect(INSET_BOTTOM).toContain("env(safe-area-inset-bottom");
+    stop();
   });
 });

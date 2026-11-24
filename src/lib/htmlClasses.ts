@@ -12,6 +12,7 @@ const PLATFORM_CLASSES: Record<Platform, string> = {
   macos: "platform-mac",
   linux: "platform-linux",
   android: "platform-android",
+  ios: "platform-ios",
 };
 
 const MANAGED_CLASSES = ["reduce-motion", "reduce-blur", ...Object.values(PLATFORM_CLASSES)];

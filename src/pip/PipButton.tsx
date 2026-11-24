@@ -26,7 +26,7 @@ export function PipButton() {
     };
   }, []);
 
-  if (platform === "android") return null;
+  if (platform === "android" || platform === "ios") return null;
 
   const label = open ? "Close mini player" : "Open mini player";
   return (
