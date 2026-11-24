@@ -13,6 +13,7 @@ import {
 } from "./bridge";
 import {
   expiryOf,
+  IOS,
   IDLE_SNAPSHOT,
   mediaEventsFor,
   queueItemFor,
@@ -60,6 +61,19 @@ function describeError(error: unknown): string {
   }
 }
 
+/**
+ * Containers AVFoundation can actually decode. iOS resolves through the same ladder as
+ * Android (141 > 251 > 140 > …), and 251 is Opus-in-WebM — which `AVPlayer` cannot play
+ * at all. Android's Media3 handles Opus/WebM, so the ladder is right for it; on iOS the
+ * resolver must be asked for MP4/AAC (`mp4Only`) and a non-decodable result must be a
+ * real error instead of a silent stall.
+ */
+const IOS_PLAYABLE_MIME = /^audio\/(mp4|m4a|aac|mpeg|mp3|wav|x-wav|x-flac|flac)\b/i;
+
+function iosCanPlay(mime: string | undefined): boolean {
+  return typeof mime === "string" && IOS_PLAYABLE_MIME.test(mime);
+}
+
 function report(action: string): (error: unknown) => void {
   return (error) => console.warn(`[hushio] android ${action} failed: ${describeError(error)}`);
 }
@@ -84,9 +98,18 @@ export async function androidPlayStream(id: string, title: string, fromSeconds =
   }
   const maxKbps = currentStreamBitrate();
   const addon = addonsEnabled(maxKbps === undefined) ? await addonStreamFor(id) : null;
+  // iOS: ask for MP4/AAC only, because AVPlayer has no Opus/WebM decoder (see above).
   const stream =
-    addon?.stream ?? (maxKbps === undefined ? await resolveStream(id, false) : await resolveStream(id, false, maxKbps));
+    addon?.stream ??
+    (maxKbps === undefined
+      ? await resolveStream(id, false, undefined, IOS)
+      : await resolveStream(id, false, maxKbps, IOS));
   if (generation !== playGeneration) return;
+  if (IOS && !iosCanPlay(stream.mime)) {
+    // Honest failure: the resolved container cannot be decoded here. Throwing lets the
+    // shared failure path surface one message instead of an AVPlayer that never starts.
+    throw new Error(`iOS cannot decode ${stream.mime || "this stream"}`);
+  }
   useNowStream.getState().publish(id, streamDetails(stream, addon?.label ?? (isJioSaavnId(id) ? "JioSaavn" : "Stream")));
   const item = queueItemFor(id, title, stream.url, headers(), expiryOf(stream.url, Date.now()), meta);
   await playerSetQueue([item], 0, positionMs);

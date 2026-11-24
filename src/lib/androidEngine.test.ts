@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const snapshot = (id: string | null) => ({ playing: false, buffering: false, positionMs: 0, durationMs: 0, index: 0, id, speed: 1, repeat: 'off', shuffle: false });
+// Lets a test pretend to be iOS: androidEngine reads `IOS` as a live binding.
+const platform = vi.hoisted(() => ({ ios: false }));
 const mocks = vi.hoisted(() => ({
   resolveStream: vi.fn(), playerSetQueue: vi.fn(async (_items: { id: string }[], _index: number, _position: number) => {}), playerPlay: vi.fn(async () => {}),
   playerPause: vi.fn(async () => {}), playerSetUrl: vi.fn(async () => {}), localLibraryTrackPath: vi.fn(async () => 'content://song'),
@@ -10,6 +12,12 @@ const mocks = vi.hoisted(() => ({
   library: { liked: [] as { id: string }[], toggleLike: vi.fn() },
 }));
 vi.mock('./bridge', () => ({ ...mocks }));
+vi.mock('./androidPlayback', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./androidPlayback')>()),
+  get IOS() {
+    return platform.ios;
+  },
+}));
 vi.mock('./resolveStream', () => ({ resolveStream: mocks.resolveStream, MEDIA_USER_AGENT: 'test' }));
 vi.mock('../stores/ui', () => ({ useUI: { getState: () => ({ toast: mocks.toast }) } }));
 vi.mock('../stores/player', () => ({
@@ -19,7 +27,7 @@ vi.mock('../stores/player', () => ({
 vi.mock('../stores/library', () => ({ useLibrary: { getState: () => mocks.library } }));
 vi.mock('../stores/settings', () => ({ useSettings: { getState: () => ({ dataSaver: false }) } }));
 import { androidPlay, androidPlayStream, androidPause, startAndroidEngine } from './androidEngine';
-beforeEach(() => { vi.clearAllMocks(); mocks.resolveStream.mockResolvedValue({ url: 'https://media/song' }); mocks.library.liked = []; });
+beforeEach(() => { vi.clearAllMocks(); platform.ios = false; mocks.resolveStream.mockResolvedValue({ url: 'https://media/song' }); mocks.library.liked = []; });
 async function sendPlayerAction(action: string) {
   startAndroidEngine(vi.fn());
   const handler = mocks.listenPlayerEvent.mock.calls.find(([event]) => event === 'player-action')![1] as (payload: { action: string }) => void;
@@ -381,5 +389,26 @@ describe('Android stale-event guards (ADR-007)', () => {
     const onError = listener('player-error');
     onError({ index: 0, id: 'anything', code: 'boom', message: 'boom', recoverable: false });
     expect(mocks.toast).toHaveBeenCalledTimes(1);
+  });
+});
+
+// iOS has no Opus/WebM decoder in AVPlayer, while Android's Media3 does. The resolver is
+// therefore asked for MP4/AAC on iOS only, and a non-decodable container fails loudly
+// instead of queueing a stream the platform can never play.
+describe('iOS codec safety', () => {
+  it('requests MP4-only candidates on iOS', async () => {
+    platform.ios = true;
+    mocks.resolveStream.mockResolvedValue({ url: 'https://media/song', mime: 'audio/mp4' });
+    await androidPlayStream('song', 'Song');
+    expect(mocks.resolveStream).toHaveBeenCalledWith('song', false, undefined, true);
+    expect(mocks.playerSetQueue).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects an Opus/WebM result on iOS instead of queueing it', async () => {
+    platform.ios = true;
+    mocks.resolveStream.mockResolvedValue({ url: 'https://media/song', mime: 'audio/webm; codecs="opus"' });
+    await expect(androidPlayStream('song', 'Song')).rejects.toThrow(/cannot decode/);
+    expect(mocks.playerSetQueue).not.toHaveBeenCalled();
+    expect(mocks.playerPlay).not.toHaveBeenCalled();
   });
 });
