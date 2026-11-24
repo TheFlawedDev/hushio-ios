@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   playerPause: vi.fn(async () => {}), playerSetUrl: vi.fn(async () => {}), localLibraryTrackPath: vi.fn(async () => 'content://song'),
   playerGetState: vi.fn(async () => snapshot(null)),
   toast: vi.fn(),
+  jsLog: vi.fn(),
   listenPlayerEvent: vi.fn(async (_event: string, _handler: (payload: unknown) => void) => () => {}),
   player: { next: vi.fn(), prevTrack: vi.fn(), queue: [{ id: 'song', title: 'Song', artist: 'Artist' }], index: 0 },
   library: { liked: [] as { id: string }[], toggleLike: vi.fn() },

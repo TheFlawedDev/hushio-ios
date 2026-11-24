@@ -10,6 +10,7 @@ import {
   playerSetUrl,
   localLibraryTrackPath,
   playerSetVolume,
+  jsLog,
 } from "./bridge";
 import {
   expiryOf,
@@ -70,12 +71,24 @@ function describeError(error: unknown): string {
  */
 const IOS_PLAYABLE_MIME = /^audio\/(mp4|m4a|aac|mpeg|mp3|wav|x-wav|x-flac|flac)\b/i;
 
+function hostOf(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return "invalid-url";
+  }
+}
+
 function iosCanPlay(mime: string | undefined): boolean {
   return typeof mime === "string" && IOS_PLAYABLE_MIME.test(mime);
 }
 
 function report(action: string): (error: unknown) => void {
-  return (error) => console.warn(`[hushio] android ${action} failed: ${describeError(error)}`);
+  return (error) => {
+    const detail = describeError(error);
+    console.warn(`[hushio] android ${action} failed: ${detail}`);
+    jsLog("warn", `${action} failed: ${detail}`);
+  };
 }
 
 export async function androidPlayStream(id: string, title: string, fromSeconds = 0, meta: PlayMeta = {}): Promise<void> {
@@ -111,6 +124,7 @@ export async function androidPlayStream(id: string, title: string, fromSeconds =
     throw new Error(`iOS cannot decode ${stream.mime || "this stream"}`);
   }
   useNowStream.getState().publish(id, streamDetails(stream, addon?.label ?? (isJioSaavnId(id) ? "JioSaavn" : "Stream")));
+  jsLog("info", `resolved ${id}: mime=${stream.mime || "?"} itag=${stream.itag ?? "?"} host=${hostOf(stream.url)}`);
   const item = queueItemFor(id, title, stream.url, headers(), expiryOf(stream.url, Date.now()), meta);
   await playerSetQueue([item], 0, positionMs);
   traceMark("player queued");
@@ -201,6 +215,7 @@ async function refreshUrl(id: string): Promise<void> {
   } catch (error) {
     if (generation !== playGeneration) return;
     console.warn(`[hushio] stream refresh failed: ${String(error)}`);
+    jsLog("warn", `stream refresh failed for ${id}: ${describeError(error)}`);
     useUI.getState().toast(playFailedMessage(currentTitle), "error");
   }
 }
@@ -278,6 +293,7 @@ export function startAndroidEngine(dispatch: (type: MediaEvent | "ended") => voi
   });
   subscribe<PlayerFailure>("player-error", (event) => {
     console.warn(`[hushio] player error ${event.code}: ${event.message}`);
+    jsLog("warn", `player-error ${event.code}: ${event.message} (id=${event.id ?? "none"})`);
     if (currentId !== null && event.id !== currentId) return;
     useUI.getState().toast(playFailedMessage(currentTitle), "error");
   });

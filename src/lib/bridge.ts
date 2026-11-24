@@ -30,6 +30,17 @@ export function detectPlatform(ua: string): Platform {
 
 export const platform: Platform = detectPlatform(navigator.userAgent);
 
+/**
+ * Forward a diagnostic line to the Rust log.
+ *
+ * On iOS a release build has no reachable console, so device-only failures are invisible.
+ * `js_log` prints through the Rust tracing subscriber, which `devicectl --console` shows.
+ * Never pass credentials, tokens or signed URLs — hosts and error codes only.
+ */
+export function jsLog(level: "info" | "warn" | "error", message: string): void {
+  void invoke("js_log", { level, message }).catch(() => {});
+}
+
 export async function call<T>(command: string, args?: InvokeArgs): Promise<T> {
   try {
     return await invoke<T>(command, args);

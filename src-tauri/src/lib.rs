@@ -671,6 +671,25 @@ fn panic_message(info: &std::panic::PanicHookInfo<'_>) -> String {
     "The app stopped unexpectedly.".to_owned()
 }
 
+/// Diagnostic sink for the frontend.
+///
+/// On iOS a release build has no visible console: JavaScript `console.warn` reaches
+/// neither the device log nor `devicectl --console`, which makes device-only playback
+/// failures impossible to diagnose. The frontend forwards those messages here and they
+/// come out of the Rust tracing subscriber, i.e. on the app's stdout, which
+/// `xcrun devicectl device process launch --console` captures.
+///
+/// Deliberately message-only: callers must never pass credentials, tokens or URLs with
+/// signatures (see the call sites, which log hosts and codes rather than full URLs).
+#[tauri::command]
+fn js_log(level: String, message: String) {
+    match level.as_str() {
+        "error" => tracing::error!(target: "frontend", "{message}"),
+        "warn" => tracing::warn!(target: "frontend", "{message}"),
+        _ => tracing::info!(target: "frontend", "{message}"),
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tracing_subscriber::fmt()
@@ -897,6 +916,7 @@ pub fn run() {
             download_cancel,
             download_queue,
             reveal::folder_pick,
+            js_log,
             notification_state,
             notification_request,
             notification_settings,
