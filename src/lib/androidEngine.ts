@@ -48,8 +48,19 @@ const REFRESH_LIMIT = 3;
 const REFRESH_WINDOW_MS = 60_000;
 let refreshTimes: number[] = [];
 
+/**
+ * Per-stream headers sent to the native player.
+ *
+ * Android needs the browser UA on every request. On iOS a non-empty header map forces
+ * `PlayerEngine` through `HushioResourceLoader` (the `hushio-https://` custom scheme), and
+ * that path has never been exercised on hardware. A signed `googlevideo` URL carries its
+ * authorisation in the query string, so the native `AVURLAsset(url:)` path can fetch it
+ * directly — which is the platform's well-tested path. Keeping the map empty on iOS is
+ * therefore deliberate, not an oversight: the loader stays available for sources that
+ * genuinely need custom headers.
+ */
 function headers(): Record<string, string> {
-  return { "User-Agent": MEDIA_USER_AGENT };
+  return IOS ? {} : { "User-Agent": MEDIA_USER_AGENT };
 }
 
 function describeError(error: unknown): string {
@@ -209,7 +220,12 @@ async function refreshUrl(id: string): Promise<void> {
   const generation = playGeneration;
   try {
     const maxKbps = currentStreamBitrate();
-    const stream = maxKbps === undefined ? await resolveStream(id, true) : await resolveStream(id, true, maxKbps);
+    // Same codec constraint as the initial resolve: without it a refresh could hand
+    // AVPlayer an Opus/WebM rendition that iOS cannot decode.
+    const stream =
+      maxKbps === undefined
+        ? await resolveStream(id, true, undefined, IOS)
+        : await resolveStream(id, true, maxKbps, IOS);
     if (generation !== playGeneration) return;
     await playerSetUrl(id, stream.url, headers(), expiryOf(stream.url, Date.now()));
   } catch (error) {

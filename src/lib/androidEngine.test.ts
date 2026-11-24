@@ -413,3 +413,21 @@ describe('iOS codec safety', () => {
     expect(mocks.playerPlay).not.toHaveBeenCalled();
   });
 });
+
+// A signed googlevideo URL authorises itself, and on iOS a non-empty header map would
+// force the native player through the custom-scheme resource loader. Keeping headers empty
+// there is a deliberate platform decision (see headers() in androidEngine).
+describe('iOS queue headers', () => {
+  it('sends no per-stream headers on iOS so AVPlayer uses the native URL path', async () => {
+    platform.ios = true;
+    mocks.resolveStream.mockResolvedValue({ url: 'https://media/song', mime: 'audio/mp4' });
+    await androidPlayStream('song', 'Song');
+    expect(mocks.playerSetQueue.mock.calls[0][0][0].headers).toEqual({});
+  });
+
+  it('still sends the browser user agent on Android', async () => {
+    platform.ios = false;
+    await androidPlayStream('song', 'Song');
+    expect(mocks.playerSetQueue.mock.calls[0][0][0].headers).toEqual({ 'User-Agent': 'test' });
+  });
+});
