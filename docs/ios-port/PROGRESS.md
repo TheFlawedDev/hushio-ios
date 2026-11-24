@@ -64,8 +64,17 @@ Branch `port/ios-completion` (from `port/ios` @ `1191f49`). Steps 1–5 of
 | Settings surfaces | `startUpdates()` iOS no-op, system-bar intent documented, tested |
 | Verification | `pnpm typecheck` 0; `pnpm test` 354 files / 3,756 tests; `cargo test` 634; `cargo check --target aarch64-apple-ios-sim` clean; `swift build` complete; simulator bundle builds, installs and launches (`evidence/ios-sim-after-sleep-timer.png`) |
 
-Fan-out note: four agents ran in parallel Rex panes; two panes vanished mid-run. Their files
-were reviewed and verified (advanced audio) or redone in-repo (facade audit) — see
+Fan-out note (corrected twice): the first four agents were launched with `pi -p` (print mode)
+and **no `--keep-open`**, so each pane closed when its command exited and the final output was
+lost — that, not "session churn", is why `advanced-audio` left files but no handoff and
+`facade-audit` left nothing. A later pair of `agy` panes died instantly because a rex flag
+(`--json`) was placed **after** the `--` separator, so `agy` received an unknown flag, printed
+usage and exited 2, leaving dead PTYs.
+
+Working procedure for subagents here: start a bare interactive `agy` pane, confirm the TUI
+booted, then prompt it with a pointer to a brief in `coordination/`; poll with `rex capture`.
+Briefs must name an in-repo deliverable, because a closed pane takes the final message with it.
+Files were reviewed and verified (advanced audio) or redone in-repo (facade audit) — see
 `../coordination/agent-handoff-fanout-recovery.md`.
 
 ## Active ownership
