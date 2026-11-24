@@ -67,6 +67,10 @@ private struct UrlArgs: Decodable {
   let headers: [String: String]?
   let expiresAtEpochMs: Double?
 }
+private struct SleepTimerArgs: Decodable {
+  let endsAtEpochMs: Double?
+  let endOfSong: Bool
+}
 private struct KeepAwakeArgs: Decodable { let on: Bool }
 
 // MARK: - Plugin
@@ -79,8 +83,12 @@ final class HushioPlayerPlugin: Plugin {
     engine.onSnapshot = { [weak self] snapshot in
       self?.emit("player-state", Self.snapshotPayload(snapshot))
     }
-    engine.onEnded = { [weak self] in
-      self?.emit("player-ended", [:])
+    engine.onEnded = { [weak self] id in
+      var payload: JSObject = [:]
+      if let id = id {
+        payload["id"] = id
+      }
+      self?.emit("player-ended", payload)
     }
     engine.onStreamNeeded = { [weak self] id, reason in
       // TS `StreamNeeded` is `{ id: string; reason: string }` — emit exactly that shape.
@@ -222,6 +230,20 @@ final class HushioPlayerPlugin: Plugin {
     }
   }
 
+  /// `player_set_sleep_timer {endsAtEpochMs, endOfSong}`. The engine validates the
+  /// deadline and rejects a non-finite value with `invalid_argument`; `null` cancels
+  /// (or, with `endOfSong: true`, arms pause-at-end). See PlayerEngine.setSleepTimer.
+  @objc public func player_set_sleep_timer(_ invoke: Invoke) {
+    onMain(invoke) {
+      let parsed = try self.args(SleepTimerArgs.self, invoke)
+      try self.engine.setSleepTimer(
+        endsAtEpochMs: parsed.endsAtEpochMs,
+        endOfSong: parsed.endOfSong
+      )
+      return nil
+    }
+  }
+
   @objc public func player_set_url(_ invoke: Invoke) {
     onMain(invoke) {
       let parsed = try self.args(UrlArgs.self, invoke)
@@ -325,7 +347,6 @@ final class HushioPlayerPlugin: Plugin {
   @objc public func player_set_repeat(_ invoke: Invoke) { invoke.reject("not_supported") }
   @objc public func player_set_shuffle(_ invoke: Invoke) { invoke.reject("not_supported") }
   @objc public func player_set_skip_silence(_ invoke: Invoke) { invoke.reject("not_supported") }
-  @objc public func player_set_sleep_timer(_ invoke: Invoke) { invoke.reject("not_supported") }
 
   // Google Cast is an Android SDK integration (K/CastBridge.kt). There is no Cast
   // framework in this build; AirPlay is not the same feature and is not offered.

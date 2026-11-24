@@ -25,6 +25,18 @@
 	<true/>
 
 	<!--
+	  BGTaskScheduler refuses to submit a task whose identifier is not listed here, so
+	  `HushioSyncTask.scheduleRetry()` would reject `bg_task_not_permitted` forever and the
+	  sync-retry seam would be dead on arrival. The value must match
+	  src-tauri/tauri-plugin-hushio-player/ios/Sources/ServicesEngine.swift::HushioSyncTask.identifier
+	  and the handler registered in HushioServicePlugins.swift.
+	-->
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.hushio.app.iosdev.background-sync</string>
+	</array>
+
+	<!--
 	  The Rust stream proxy serves media over http://127.0.0.1:<port> and debug builds load
 	  the renderer from the Vite dev server on the same loopback. ATS otherwise refuses
 	  cleartext to non-TLS hosts. NSAllowsLocalNetworking is the narrow, Apple-documented
@@ -37,8 +49,7 @@
 		<true/>
 	</dict>
 
-	<key>CFBundleURLTypes</key>
-	<array>
+	<key>CFBundleURLTypes</key>	<array>
 		<dict>
 			<key>CFBundleURLName</key>
 			<string>com.hushio.app.iosdev.oauth</string>

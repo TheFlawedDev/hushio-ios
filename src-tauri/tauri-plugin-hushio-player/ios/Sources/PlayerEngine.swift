@@ -141,6 +141,11 @@ public final class PlayerEngine {
     /// Android artwork ceiling/timeouts (`ARTWORK_MAX_DIMENSION_PX`, 15s).
     public static let artworkMaxDimension: CGFloat = 512
     public static let artworkTimeout: TimeInterval = 15
+    /// Sleep timer cadence/fade window/restore delay, mirroring Kotlin `SLEEP_TICK_MS`,
+    /// `SleepTimer.FADE_MS` and `VOLUME_RESTORE_MS` (P7).
+    public static let sleepTickMs: Int = 250
+    public static let sleepFadeMs: Int64 = 10_000
+    public static let sleepVolumeRestoreMs: Int = 500
 
     // MARK: - Callbacks (the `player-*` event surface, BEHAVIOR_CONTRACTS §1.3)
 
@@ -148,10 +153,10 @@ public final class PlayerEngine {
     /// durationMs/index/id and at most once per second while time advances. Always the
     /// *full* snapshot, never a delta.
     public var onSnapshot: ((PlayerSnapshot) -> Void)?
-    /// `player-ended`: `{}` on AVPlayerItemDidPlayToEndTime for the current item.
-    /// Carries no identity, exactly like Android `player-ended` (P3: it cannot be
-    /// filtered by id; the TS `playGeneration` guard is the only filter).
-    public var onEnded: (() -> Void)?
+    /// `player-ended`: emitted on AVPlayerItemDidPlayToEndTime for the current item.
+    /// Carries the ended item's id when it is attributable (ADR-007 Decision 1 — the one
+    /// authorised additive field), or nil when it is not; the adapter then emits `{}`.
+    public var onEnded: ((String?) -> Void)?
     /// `player-stream-needed`: `{index, id, reason}`.
     public var onStreamNeeded: ((String, PlayerStreamReason) -> Void)?
     /// `player-error`: `{index, id, code, message, recoverable}`. The index is implicit
@@ -201,6 +206,18 @@ public final class PlayerEngine {
     /// Remembers the user's intent across a transient audio interruption so the engine can
     /// resume natively (Android's Media3 focus handling does the equivalent).
     private var resumeAfterInterruption = false
+
+    // MARK: - Sleep timer state (P7)
+
+    /// Absolute epoch-millisecond deadline; `nil` = no deadline-mode sleep. Kept
+    /// independent of `sleepEndOfSong` exactly like Kotlin `SleepTimer.endsAtMs`.
+    private var sleepDeadlineEpochMs: Int64?
+    /// Pause when the current item completes (no fade). Consumed on the ended callback.
+    private var sleepEndOfSong = false
+    /// The active 250 ms deadline ticker, self-rescheduling like the Kotlin runnable.
+    private var sleepTickerWorkItem: DispatchWorkItem?
+    /// The one-shot 500 ms volume restore scheduled after the deadline fires.
+    private var sleepRestoreWorkItem: DispatchWorkItem?
 
     // MARK: - Observation state
 
@@ -257,6 +274,10 @@ public final class PlayerEngine {
     /// handled by the Rust/Tauri layer, not by this engine.
     public func invalidate() {
         cancelPendingWork()
+        cancelSleepTicker()
+        cancelSleepRestore()
+        sleepDeadlineEpochMs = nil
+        sleepEndOfSong = false
         playRequested = false
         player.pause()
         player.replaceCurrentItem(with: nil)
@@ -490,6 +511,123 @@ public final class PlayerEngine {
         throw PlayerEngineError.notImplemented(
             "player_set_eq: AVPlayer has no equalizer; AVAudioEngine + AVAudioUnitEQ proposal pending"
         )
+    }
+
+    // MARK: - Sleep timer (P7)
+
+    /// `player_set_sleep_timer {endsAtEpochMs:number|null, endOfSong:boolean}`.
+    ///
+    /// Mirrors Kotlin `PlayerService.setSleepTimer` + `SleepTimer`:
+    ///  * deadline mode — a 250 ms main-queue ticker fades `player.volume` linearly to 0
+    ///    over the final 10 seconds, then pauses and restores the pre-fade volume after
+    ///    500 ms;
+    ///  * a deadline already in the past is an immediate pause (zero-length fade);
+    ///  * `endOfSong` — pause when the current item completes, no fade, and no queue
+    ///    advance (ADR-007 Decision 3: native owns transport only);
+    ///  * `{nil, false}` cancels and restores any fade that was in progress.
+    ///
+    /// This is transport-only: it never emits queue/advance events. A non-finite deadline
+    /// is rejected (`invalid_argument`) rather than silently clamped, because ±∞/NaN is
+    /// not a meaningful transport deadline.
+    public func setSleepTimer(endsAtEpochMs: Double?, endOfSong: Bool) throws {
+        if let deadline = endsAtEpochMs {
+            guard deadline.isFinite else {
+                throw PlayerEngineError.invalidArgument(
+                    "player_set_sleep_timer: endsAtEpochMs must be a finite epoch-millisecond number"
+                )
+            }
+            sleepDeadlineEpochMs = Int64(deadline.rounded())
+        } else {
+            sleepDeadlineEpochMs = nil
+        }
+        sleepEndOfSong = endOfSong
+
+        cancelSleepTicker()
+        cancelSleepRestore()
+
+        if sleepDeadlineEpochMs != nil {
+            startSleepTicker()
+        } else {
+            // Cancel (`{nil, false}`) or end-of-song mode: any faded volume is restored.
+            restoreSleepVolume()
+        }
+    }
+
+    /// Linear fade target, exactly Kotlin `SleepTimer.volumeFor`:
+    /// `min(1, max(0, remainingMs / FADE_MS))`.
+    private static func sleepVolume(forRemainingMs remaining: Int64) -> Double {
+        let fraction = Double(remaining) / Double(PlayerEngine.sleepFadeMs)
+        return min(1, max(0, fraction))
+    }
+
+    private func startSleepTicker() {
+        cancelSleepTicker()
+        runSleepTick()
+    }
+
+    private func cancelSleepTicker() {
+        sleepTickerWorkItem?.cancel()
+        sleepTickerWorkItem = nil
+    }
+
+    /// One 250 ms step, mirroring the Kotlin `sleepTicker` runnable: evaluate against the
+    /// deadline, then reschedule while a deadline is still active. The fade writes the
+    /// absolute `player.volume`, exactly like Android (not multiplied by `baseVolume`).
+    private func runSleepTick() {
+        guard let deadline = sleepDeadlineEpochMs else { return }
+        let remaining = deadline - PlayerEngine.nowMs()
+        if remaining <= 0 {
+            fireSleep()
+            return
+        }
+        if remaining < PlayerEngine.sleepFadeMs {
+            player.volume = Float(PlayerEngine.sleepVolume(forRemainingMs: remaining))
+        }
+        let work = DispatchWorkItem { [weak self] in
+            self?.runSleepTick()
+        }
+        sleepTickerWorkItem = work
+        DispatchQueue.main.asyncAfter(
+            deadline: .now() + .milliseconds(PlayerEngine.sleepTickMs),
+            execute: work
+        )
+    }
+
+    /// Deadline reached: pause (transport only) and restore the pre-fade volume after
+    /// 500 ms. Pausing an already-paused player is a no-op, and the restore still runs so
+    /// a fade that began while paused can never leave the volume desynchronised.
+    private func fireSleep() {
+        cancelSleepTicker()
+        sleepDeadlineEpochMs = nil
+        sleepEndOfSong = false
+        playRequested = false
+        player.pause()
+        scheduleSleepRestore()
+        emitSnapshot()
+    }
+
+    private func cancelSleepRestore() {
+        sleepRestoreWorkItem?.cancel()
+        sleepRestoreWorkItem = nil
+    }
+
+    private func scheduleSleepRestore() {
+        cancelSleepRestore()
+        let work = DispatchWorkItem { [weak self] in
+            self?.restoreSleepVolume()
+        }
+        sleepRestoreWorkItem = work
+        DispatchQueue.main.asyncAfter(
+            deadline: .now() + .milliseconds(PlayerEngine.sleepVolumeRestoreMs),
+            execute: work
+        )
+    }
+
+    /// Restores the player volume to the engine's current `baseVolume` (the pre-fade
+    /// volume; there is no EQ headroom here, so this is exactly `player_set_volume`).
+    private func restoreSleepVolume() {
+        sleepRestoreWorkItem = nil
+        player.volume = Float(baseVolume)
     }
 
     /// `player_set_url {id,url,headers,expiresAtEpochMs}` -> `false` = unknown_item.
@@ -934,12 +1072,27 @@ public final class PlayerEngine {
     private func handleItemEnded(_ item: AVPlayerItem) {
         guard item === observedItem else { return }
         refreshDuration()
+        // The ended identity is the current queue item's id (native owns a single
+        // installed item and never advances). An empty id is reported as nil so the
+        // adapter emits `{}` instead of `{id: ""}` (ADR-007 Decision 1).
+        let endedId: String? = {
+            guard let id = currentQueueItem()?.id, !id.isEmpty else { return nil }
+            return id
+        }()
+        if sleepEndOfSong {
+            // End-of-song sleep: pause at completion, no fade, never advance (ADR-007
+            // Decision 3). Unlike a natural end — where playWhenReady stays true like
+            // Media3's STATE_ENDED — the player is now genuinely stopped.
+            sleepEndOfSong = false
+            playRequested = false
+            player.pause()
+        }
         // Media3 keeps playWhenReady == true in STATE_ENDED, and Android reports
-        // `playing` from playWhenReady. Preserve that: the snapshot after an end still
-        // says playing == true; the TS `handleEnded` path decides what happens next
+        // `playing` from playWhenReady. Preserve that: the snapshot after a natural end
+        // still says playing == true; the TS `handleEnded` path decides what happens next
         // (repeat-one, advance, autoplay). This engine never restarts or advances by
         // itself, because that is shared queue logic (P4/C-1/C-2).
-        onEnded?()
+        onEnded?(endedId)
         emitSnapshot(force: true)
     }
 

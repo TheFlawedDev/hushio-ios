@@ -26,6 +26,10 @@
 | `BLOCKERS.md` | User/toolchain/platform/source blockers, never counted as parity |
 | `PROGRESS.md` | Current execution record |
 | `REMAINING_SEQUENCE.md` | Chronological order for the remaining work and the critical path |
+| `FACADE_AUDIT.md` | Fabricated-success sweep of every iOS-reachable Rust command |
+| `ADVANCED_AUDIO.md` | Per-capability EQ/crossfade/skip-silence/leveling/sleep decisions |
+| `HUMAN_STEPS.md` | The only owner-gated inputs; agents prepare the seam instead of faking them |
+| `DEVICE_VERIFICATION.md` | Ordered device checklist that closes the remaining matrix rows |
 
 ## Verification so far
 

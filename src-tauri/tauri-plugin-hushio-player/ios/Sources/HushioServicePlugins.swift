@@ -21,7 +21,9 @@
 // bridge (`src-tauri/src/android.rs`) expects.
 
 import Foundation
+import BackgroundTasks
 import Tauri
+import WebKit
 
 // MARK: - Wire argument DTOs
 
@@ -455,10 +457,37 @@ final class HushioPermissionPlugin: Plugin {
 // MARK: - hushio-sync
 
 final class HushioSyncPlugin: Plugin {
+  /// `BGTaskScheduler.shared.register` must run once, early, before a task can fire.
+  /// `nil` = not attempted yet, `false` = the OS refused the identifier (see the
+  /// `BGTaskSchedulerPermittedIdentifiers` entry in `Info.ios.plist`).
+  private static var handlerRegistered: Bool?
+
+  /// Register the launch handler when the webview is created. Without a registered
+  /// handler the OS terminates the app when a submitted refresh task fires, so submitting
+  /// without registering would be worse than not scheduling at all.
+  ///
+  /// The handler completes the task as **failed** on purpose: the durable YouTube sync queue
+  /// lives in Rust and is driven by the app/WebView session, which a `BGAppRefreshTask`
+  /// handler cannot start in this build. Reporting failure is the honest outcome; it must
+  /// never claim success it did not achieve.
+  override func load(webview: WKWebView) {
+    guard HushioSyncPlugin.handlerRegistered == nil else { return }
+    HushioSyncPlugin.handlerRegistered = BGTaskScheduler.shared.register(
+      forTaskWithIdentifier: HushioSyncTask.identifier,
+      using: nil
+    ) { task in
+      task.setTaskCompleted(success: false)
+    }
+  }
+
   /// `schedule {}` -> `{}`. BGTaskScheduler is best-effort on iOS; the service returns
   /// the real registration/submission outcome and this never fabricates success.
   @objc public func schedule(_ invoke: Invoke) {
     onMain {
+      if HushioSyncPlugin.handlerRegistered == false {
+        invoke.reject("bg_task_not_registered")
+        return
+      }
       switch HushioSyncTask.scheduleRetry() {
       case .success:
         resolveEmpty(invoke)

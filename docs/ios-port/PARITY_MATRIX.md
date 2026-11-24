@@ -43,7 +43,10 @@ actually built and actually run.
 | Background audio entitlement | **SRC** | `UIBackgroundModes: audio` merged into built Info.plist (verified with PlistBuddy) |
 | Interruption / route-change handling | **SRC** | Implemented in `PlayerEngine`; requires device to verify |
 | Per-stream header replay + byte ranges | **SRC** | `HushioResourceLoader` in engine; needs a real streaming source |
-| Equilizer / crossfade / Automix / skip-silence / sleep timer | **N/A + OPEN** | `player_set_eq` rejects `not_implemented`; AVPlayer has no EQ. `AVAudioUnitEQ` is the documented C3 proposal. No fake success |
+| Sleep timer (`player_set_sleep_timer`) | **SRC** | Implemented in `PlayerEngine.setSleepTimer`: 250 ms ticker, linear 10 s fade, pause at deadline, 500 ms volume restore, pause-at-end mode, `invalid_argument` for a non-finite deadline. Transport-only (ADR-007 D3). Device-unverified |
+| EQ / crossfade / skip-silence / leveling | **N/A + OPEN** | `player_set_eq` rejects `not_implemented`; AVPlayer has no EQ node; crossfade/leveling have no wire command on either mobile platform. Decision table: `ADVANCED_AUDIO.md`. No fake success |
+| `player-ended` carries `{id}` | **V-HOST** | iOS emits the ended item's id (ADR-007 D1, the one authorised additive field) and the shared engine ignores a stale id; legacy `{}` still ends playback. 8 engine tests |
+| Stale snapshot/error rejection | **V-HOST** | `applySnapshot` ignores a snapshot for a non-current id; `player-error` toasts only for the current track. Closes source defect D03 on both mobile platforms; 8 tests |
 | Native multi-item queue advancement | **OPEN** | Contract C-1/C-2 unresolved; active TS sends a singleton queue (source behaviour on Android too) |
 | Google Cast | **N/A** | Android Cast SDK only; rejects `not_supported`. AirPlay is not the same feature |
 
@@ -56,7 +59,7 @@ actually built and actually run.
 | Document picker / tree scan / sidecar LRC | **SRC** | `HushioAudioPlugin` → `DocumentPickerController`; security-scoped bookmarks; needs a tap |
 | Download publish (export) | **SRC** | Mapped to document export; **no MediaStore, no PHPhotoLibrary audio publishing** |
 | OAuth via `ASWebAuthenticationSession` | **BLOCK** | Flow + URL scheme registered in Info.plist, but `HUSHIO_GOOGLE_CLIENT_ID` / `HUSHIO_SPOTIFY_CLIENT_ID` are not configured — documented configuration blocker, not a code gap |
-| Background sync retry (BGTaskScheduler) | **SRC** | Best-effort; requires `BGTaskSchedulerPermittedIdentifiers` + device |
+| Background sync retry (BGTaskScheduler) | **SRC** | `BGTaskSchedulerPermittedIdentifiers` added to `Info.ios.plist` and a launch handler is registered once in `HushioSyncPlugin.load`; `schedule` rejects `bg_task_not_registered` if the OS refuses, and the handler completes the task as failed rather than pretending the Rust queue ran. Best-effort by nature; device-unverified |
 | In-app updates | **N/A** | iOS distribution is Xcode dev signing / TestFlight / App Store; the updater row is hidden and `update` rejects |
 | Deep-link / custom scheme | **PARTIAL SRC** | `hushio`, `hushio-spotify` and the OAuth scheme are registered in Info.plist; runtime `register_scheme` is desktop-only (gated, warning removed). iOS URL → launch-action wiring is **OPEN** |
 
@@ -71,6 +74,8 @@ actually built and actually run.
 | Keep-awake via `isIdleTimerDisabled` | **SRC** | `setKeepAwake` routes to the plugin on iOS |
 | PiP button / desktop output-device picker | **N/A** | Hidden on iOS (desktop-only capabilities) |
 | Settings row membership | **SRC** | `IOS_HIDDEN_ROWS` = Android's set + in-app updater; mobile-only rows (cellular quality, haptics, Wi-Fi-only downloads) now included |
+| In-app updater on iOS | **N/A** | `startUpdates()` is an explicit no-op returning a safe cleanup — it no longer falls through to the desktop path that called the rejected Rust updater command and registered a listener. Asserted by test |
+| System-bar theming on iOS | **N/A** | `theme.ts` documents that bars are system-owned; `player_set_system_bars` rejects `not_supported` and is never called off Android. Asserted by test |
 | Accessibility / VoiceOver / Dynamic Type audit | **OPEN** | Not yet performed; requires device testing |
 | Visual fidelity review (all required views, both themes) | **OPEN** | Only reachable views captured; navigation needs interaction or a device session |
 

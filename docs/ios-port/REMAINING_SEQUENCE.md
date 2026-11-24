@@ -16,6 +16,20 @@ provider credentials.
 
 ---
 
+## Progress log
+
+| Step | State |
+|---|---|
+| 1 Facade audit | **Done** — `FACADE_AUDIT.md`. `notification_*` routed to the bridge; BGTaskScheduler identifier + launch handler added; `mobile.rs` stubs classified as inert with reachable-caller evidence |
+| 2 Settings surfaces | **Done** — `startUpdates()` iOS no-op, `theme.ts` intent documented, both tested |
+| 3 Identity/background decision | **Done** — ADR-007 accepted (`DECISIONS.md`), resolution log appended to `BEHAVIOR_CONTRACTS.md` |
+| 4 Stale-event tests | **Done** — 8 engine tests, iOS emits `player-ended {id}` |
+| 5 Advanced audio | **Done in source** — sleep timer implemented; EQ/crossfade/skip-silence/leveling decided in `ADVANCED_AUDIO.md` |
+| 6–8 Device work | **Blocked on `HUMAN_STEPS.md` H1/H2** — checklist ready in `DEVICE_VERIFICATION.md` |
+| 9 Closure docs | Partially done; final sweep needs 6–8 |
+
+---
+
 ## Step 1 — Close the fabricated-success gaps in the bridge facade (code, unblocked)
 
 | | |
