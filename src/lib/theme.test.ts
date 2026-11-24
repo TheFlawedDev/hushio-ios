@@ -74,4 +74,12 @@ describe("applyTheme system bars", () => {
     applyTheme("system");
     expect(env.bars).not.toHaveBeenCalled();
   });
+
+  it("leaves the bars alone on iOS (system-owned status bar)", () => {
+    env.platform = "ios";
+    applyTheme("dark");
+    applyTheme("light");
+    applyTheme("system");
+    expect(env.bars).not.toHaveBeenCalled();
+  });
 });

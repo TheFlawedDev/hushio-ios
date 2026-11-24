@@ -266,3 +266,120 @@ describe('Android audio focus', () => {
     expect(mocks.playerPause).not.toHaveBeenCalled();
   });
 });
+
+describe('Android stale-event guards (ADR-007)', () => {
+  const flush = () => new Promise(done => setTimeout(done, 0));
+  const listener = (name: string) => mocks.listenPlayerEvent.mock.calls.filter(([event]) => event === name).at(-1)![1] as (payload: unknown) => void;
+  const startedEngine = async () => {
+    vi.resetModules();
+    return await import('./androidEngine');
+  };
+
+  it('ignores a late snapshot for a replaced track', async () => {
+    const engine = await startedEngine();
+    const dispatch = vi.fn();
+    engine.startAndroidEngine(dispatch);
+    await flush();
+    await engine.androidPlayStream('B', 'B');
+    const onState = listener('player-state');
+    engine.androidPause();
+    vi.clearAllMocks();
+    // Stale snapshot for A (playing, advanced position) while B is current must
+    // not regress `last`, emit media events, or trigger the unrequested auto-pause.
+    onState({ ...snapshot('A'), playing: true, positionMs: 9000, durationMs: 180000 });
+    await flush();
+    expect(mocks.playerPause).not.toHaveBeenCalled();
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(engine.androidPosition()).toBe(0);
+  });
+
+  it('accepts a snapshot matching the current id after A → B → A', async () => {
+    const engine = await startedEngine();
+    const dispatch = vi.fn();
+    engine.startAndroidEngine(dispatch);
+    await flush();
+    await engine.androidPlayStream('A', 'A');
+    await engine.androidPlayStream('B', 'B');
+    await engine.androidPlayStream('A', 'A'); // A is re-selected, so currentId is 'A' again
+    const onState = listener('player-state');
+    vi.clearAllMocks();
+    // ADR-007 Decision 1: the wire has no generation field, so a snapshot for the
+    // first A occurrence is indistinguishable from one for the re-selected A — both
+    // carry id 'A'. The JS guard therefore accepts it when id === currentId.
+    onState({ ...snapshot('A'), playing: false, positionMs: 12000, durationMs: 200000 });
+    await flush();
+    expect(dispatch).toHaveBeenCalledWith('timeupdate');
+    expect(engine.androidPosition()).toBe(12);
+  });
+
+  it('ignores a snapshot for B after A is re-selected', async () => {
+    const engine = await startedEngine();
+    const dispatch = vi.fn();
+    engine.startAndroidEngine(dispatch);
+    await flush();
+    await engine.androidPlayStream('A', 'A');
+    await engine.androidPlayStream('B', 'B');
+    await engine.androidPlayStream('A', 'A');
+    const onState = listener('player-state');
+    vi.clearAllMocks();
+    onState({ ...snapshot('B'), playing: false, positionMs: 5000, durationMs: 100000 });
+    await flush();
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(engine.androidPosition()).toBe(0);
+  });
+
+  it('does not end playback for a stale player-ended id', async () => {
+    const engine = await startedEngine();
+    const dispatch = vi.fn();
+    engine.startAndroidEngine(dispatch);
+    await flush();
+    await engine.androidPlayStream('current', 'Current');
+    const onEnded = listener('player-ended');
+    onEnded({ id: 'stale' });
+    expect(dispatch).not.toHaveBeenCalledWith('ended');
+  });
+
+  it('ends playback for a legacy empty player-ended payload', async () => {
+    const engine = await startedEngine();
+    const dispatch = vi.fn();
+    engine.startAndroidEngine(dispatch);
+    await flush();
+    await engine.androidPlayStream('current', 'Current');
+    const onEnded = listener('player-ended');
+    onEnded({});
+    expect(dispatch).toHaveBeenCalledWith('ended');
+  });
+
+  it('ends playback when the player-ended id matches the current track', async () => {
+    const engine = await startedEngine();
+    const dispatch = vi.fn();
+    engine.startAndroidEngine(dispatch);
+    await flush();
+    await engine.androidPlayStream('current', 'Current');
+    const onEnded = listener('player-ended');
+    onEnded({ id: 'current' });
+    expect(dispatch).toHaveBeenCalledWith('ended');
+  });
+
+  it('toasts for a player-error only when it is for the current track', async () => {
+    const engine = await startedEngine();
+    engine.startAndroidEngine(vi.fn());
+    await flush();
+    await engine.androidPlayStream('current', 'Current');
+    const onError = listener('player-error');
+    onError({ index: 0, id: 'stale', code: 'boom', message: 'boom', recoverable: false });
+    expect(mocks.toast).not.toHaveBeenCalled();
+    onError({ index: 0, id: 'current', code: 'boom', message: 'boom', recoverable: false });
+    expect(mocks.toast).toHaveBeenCalledTimes(1);
+    expect(mocks.toast).toHaveBeenCalledWith('Couldn\'t play "Current"', 'error');
+  });
+
+  it('toasts for a player-error when no track is current yet', async () => {
+    const engine = await startedEngine();
+    engine.startAndroidEngine(vi.fn());
+    await flush();
+    const onError = listener('player-error');
+    onError({ index: 0, id: 'anything', code: 'boom', message: 'boom', recoverable: false });
+    expect(mocks.toast).toHaveBeenCalledTimes(1);
+  });
+});

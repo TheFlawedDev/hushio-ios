@@ -7,6 +7,9 @@ const systemPreference = window.matchMedia("(prefers-color-scheme: dark)");
 let removeSystemListener: (() => void) | undefined;
 
 function syncSystemBars(dark: boolean) {
+  // Only Android owns the system bars to style. On iOS the status bar is owned by
+  // the system/view controller (player_set_system_bars rejects `not_supported` there),
+  // and desktop has no bar to style — so there is nothing to set off Android.
   if (platform === "android") void playerSetSystemBars(dark).catch(() => {});
 }
 

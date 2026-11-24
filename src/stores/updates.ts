@@ -163,6 +163,14 @@ function startAndroidUpdates(): () => void {
 
 export function startUpdates(): () => void {
   if (platform === "android") return startAndroidUpdates();
+  if (platform === "ios") {
+    // iOS has no in-app updater: distribution is Xcode dev signing / TestFlight /
+    // App Store, the settings row is already hidden by IOS_HIDDEN_ROWS, and the
+    // Rust `update` command rejects with "not supported on iOS". There is nothing
+    // to poll, listen for, or tear down, so return a safe no-op cleanup.
+    // See docs/ios-port/PARITY_MATRIX.md §3 "In-app updates".
+    return () => {};
+  }
   let live = true;
   let stop: (() => void) | undefined;
 

@@ -187,6 +187,7 @@ function subscribe<T>(event: string, onEvent: (payload: T) => void): void {
 }
 
 function applySnapshot(next: PlayerSnapshot): void {
+  if (currentId !== null && next.id !== null && next.id !== currentId) return;
   const unrequested = next.playing && !wantsPlayback;
   if (unrequested) playerPause().catch(report("pause"));
   const reported = unrequested ? { ...next, playing: false } : next;
@@ -241,7 +242,10 @@ export function startAndroidEngine(dispatch: (type: MediaEvent | "ended") => voi
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") void syncNativeState();
   });
-  subscribe<unknown>("player-ended", () => dispatch("ended"));
+  subscribe<unknown>("player-ended", (payload) => {
+    const id = payload !== null && typeof payload === "object" ? (payload as { id?: unknown }).id : undefined;
+    if (id === undefined || id === currentId) dispatch("ended");
+  });
   subscribe<PlayerAction>("player-action", (event) => void handlePlayerAction(event.action));
   subscribe<PlayerFocus>("player-focus", (event) => {
     wantsPlayback = event.state === "gained";
@@ -251,6 +255,7 @@ export function startAndroidEngine(dispatch: (type: MediaEvent | "ended") => voi
   });
   subscribe<PlayerFailure>("player-error", (event) => {
     console.warn(`[hushio] player error ${event.code}: ${event.message}`);
+    if (currentId !== null && event.id !== currentId) return;
     useUI.getState().toast(playFailedMessage(currentTitle), "error");
   });
 }

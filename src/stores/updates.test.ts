@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const env = vi.hoisted(() => ({
+  platform: "windows" as string,
+}));
+
 vi.mock("../lib/bridge", () => ({
-  platform: "windows",
+  get platform() {
+    return env.platform;
+  },
   persistRead: vi.fn(async () => null),
   persistWrite: vi.fn(async () => true),
   listenUpdates: vi.fn(async () => () => {}),
@@ -28,6 +34,7 @@ function toastMessages() {
 }
 
 beforeEach(() => {
+  env.platform = "windows";
   useUpdates.setState({ state: INITIAL_UPDATE_STATE, notified: null });
   useUI.setState({ toasts: [], pendingToasts: [] });
   bridgeMock.persistWrite.mockClear();
@@ -92,5 +99,21 @@ describe("install routing", () => {
     await useUpdates.getState().install();
 
     expect(bridgeMock.openExternal).toHaveBeenCalledWith("https://github.com/Nexvyn/hushio/releases/latest");
+  });
+});
+
+describe("iOS updater", () => {
+  it("is a no-op: no command, no listener, safe cleanup", async () => {
+    env.platform = "ios";
+    bridgeMock.updatesState.mockClear();
+    bridgeMock.listenUpdates.mockClear();
+
+    const stop = startUpdates();
+    // Let any (nonexistent) async startup work settle before asserting.
+    await Promise.resolve();
+
+    expect(bridgeMock.updatesState).not.toHaveBeenCalled();
+    expect(bridgeMock.listenUpdates).not.toHaveBeenCalled();
+    expect(() => stop()).not.toThrow();
   });
 });
