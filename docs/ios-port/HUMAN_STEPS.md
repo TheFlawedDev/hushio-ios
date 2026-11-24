@@ -67,6 +67,23 @@ Check the whole picture any time with:
 ./scripts/ios-signing-check.sh
 ```
 
+### Known generated-project pitfall (fixed, but regenerable)
+
+`tauri ios init` regenerates `src-tauri/gen/apple/project.yml` from the CLI's internal
+template and **drops** two settings this port needs:
+
+| Setting | Why |
+|---|---|
+| `ENABLE_USER_SCRIPT_SANDBOXING: NO` | Xcode 15+ sandboxes build-phase scripts; the "Build Rust Code" phase must read `.tauri/cli-options-server.json` and the sandbox denies it (`error: Sandbox: node(...) deny(1) file-read-data`), failing the build after signing already passed |
+| `DEVELOPMENT_TEAM` | normally written by `tauri ios build`; keeping it in the spec means an xcodegen run cannot lose it |
+
+Repair after any `tauri ios init`:
+
+```sh
+./scripts/ios-fix-xcode-project.sh      # idempotent: patches the spec + regenerates
+./scripts/ios-signing-check.sh          # "build-phase script sandboxing: disabled"
+```
+
 ## H2 — OAuth client IDs (unblocks sign-in verification)
 
 Needed for: `REMAINING_SEQUENCE.md` step 8; `PARITY_MATRIX.md` §3 "OAuth" row.

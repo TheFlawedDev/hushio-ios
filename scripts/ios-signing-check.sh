@@ -75,6 +75,14 @@ usable="$(printf '%s\n' "$dev_output" | grep -c '|yes|' || true)"
 say "  devices Xcode considers available: ${usable:-0}"
 
 section "Generated project"
+if grep -q 'ENABLE_USER_SCRIPT_SANDBOXING = NO' src-tauri/gen/apple/hushio-desktop.xcodeproj/project.pbxproj 2>/dev/null; then
+  say "  build-phase script sandboxing: disabled (required — otherwise the Rust step"
+  say "    cannot read .tauri/cli-options-server.json)"
+else
+  say "  build-phase script sandboxing: ENABLED — the Rust build step will fail with"
+  say "    'Sandbox: node(...) deny(1) file-read-data .../cli-options-server.json'"
+  say "    fix: ./scripts/ios-fix-xcode-project.sh"
+fi
 if grep -q 'DEVELOPMENT_TEAM' src-tauri/gen/apple/hushio-desktop.xcodeproj/project.pbxproj 2>/dev/null; then
   say "  DEVELOPMENT_TEAM is embedded (written by \`tauri ios build\`)"
 else

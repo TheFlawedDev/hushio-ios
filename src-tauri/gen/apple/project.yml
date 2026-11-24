@@ -66,6 +66,7 @@ targets:
         RUST_LOG: info
     settings:
       base:
+        DEVELOPMENT_TEAM: Z2GA3JXA8J
         # Xcode 15+ sandboxes build-phase scripts. The "Build Rust Code" phase has to read
         # gen/apple/.tauri/cli-options-server.json, which the parent `tauri ios build`
         # process writes; under the sandbox that read is denied and the build fails with
